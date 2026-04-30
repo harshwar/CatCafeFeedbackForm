@@ -18,7 +18,7 @@ export const OperationsRadarChart: React.FC<Props> = ({ data }) => {
           <PolarAngleAxis dataKey="category" tick={{ fill: '#78716c', fontSize: 12, fontWeight: 600 }} />
           <PolarRadiusAxis angle={30} domain={[0, 5]} tick={false} axisLine={false} />
           <Tooltip 
-            formatter={(value: number) => [`${value} / 5.0`, 'Avg Score']}
+            formatter={(value: any) => [`${value} / 5.0`, 'Avg Score']}
             contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
           />
           <Radar name="Average Score" dataKey="score" stroke="#f97316" strokeWidth={2} fill="#f97316" fillOpacity={0.4} />

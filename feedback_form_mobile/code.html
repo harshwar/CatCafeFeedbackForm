@@ -593,7 +593,7 @@
                 submitBtn.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> Submitting...';
 
                 try {
-                    const response = await fetch('http://localhost:3001/api/submit', {
+                    const response = await fetch('https://catcafefeedbackform.onrender.com', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(state)

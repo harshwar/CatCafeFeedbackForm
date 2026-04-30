@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { StatCard } from './components/StatCard';
-import { MessageSquare, Star, Heart, Users, ExternalLink, AlertTriangle } from 'lucide-react';
+import { MessageSquare, Star, Heart, Users, ExternalLink, AlertTriangle, Zap } from 'lucide-react';
 import type { InsightsData } from './types';
 import { getVolumeData, getSourceData, getPerformanceData } from './utils/analytics';
 import type { TimeRange } from './utils/analytics';
@@ -29,12 +29,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ insights, onNavigate }) =>
 
  return (
  <div className="space-y-8">
- {insights?.syncStatus?.localFailures > 0 && (
- <div className="bg-orange-50 border border-orange-200 p-4 rounded-2xl flex items-center gap-3 text-orange-800 text-sm">
- <Zap size={18} className="text-orange-500" />
- <span>You have <strong>{insights.syncStatus.localFailures}</strong> unsynced feedbacks logged locally. Please check your n8n connection.</span>
- </div>
- )}
+  {(insights?.syncStatus?.localFailures ?? 0) > 0 && (
+  <div className="bg-orange-50 border border-orange-200 p-4 rounded-2xl flex items-center gap-3 text-orange-800 text-sm">
+  <Zap size={18} className="text-orange-500" />
+  <span>You have <strong>{insights?.syncStatus?.localFailures}</strong> unsynced feedbacks logged locally. Please check your n8n connection.</span>
+  </div>
+  )}
  
  {/* Metrics Grid */}
  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
