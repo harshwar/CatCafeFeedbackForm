@@ -1,0 +1,68 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "feedback-form",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "feedback-form-webhook"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "resource": "spreadsheet",
+        "spreadsheet": "ID_OF_YOUR_EXCEL_FILE",
+        "sheet": "Sheet1",
+        "table": "FeedbackTable",
+        "dataMode": "map",
+        "columns": [
+          "fullName",
+          "phone",
+          "residence",
+          "email",
+          "service",
+          "foodQuality",
+          "beverageQuality",
+          "atmosphere",
+          "valueForMoney",
+          "cleanliness",
+          "staffFriendliness",
+          "experience",
+          "interests",
+          "visitedBefore",
+          "visitFrequency",
+          "source",
+          "otherSource",
+          "timestamp"
+        ]
+      },
+      "name": "Microsoft Excel",
+      "type": "n8n-nodes-base.microsoftExcel",
+      "typeVersion": 1,
+      "position": [450, 300],
+      "credentials": {
+        "microsoftExcelOAuth2Api": {
+          "id": "YOUR_CREDENTIAL_ID"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Microsoft Excel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

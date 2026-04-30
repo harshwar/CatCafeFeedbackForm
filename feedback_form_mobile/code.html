@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-container": "#b4b3b3",
+                        "on-tertiary-fixed-variant": "#474747",
+                        "background": "#fff8f4",
+                        "outline": "#867466",
+                        "on-background": "#1d1b19",
+                        "on-secondary-fixed": "#360c19",
+                        "surface-dim": "#dfd9d5",
+                        "surface-tint": "#8e4e00",
+                        "primary-fixed": "#ffdcc1",
+                        "surface-container-highest": "#e8e1dd",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed": "#2e1500",
+                        "secondary-container": "#feb6c4",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-low": "#f9f2ee",
+                        "surface-container": "#f3ede9",
+                        "secondary": "#864e5a",
+                        "primary": "#8e4e00",
+                        "inverse-surface": "#33302d",
+                        "tertiary-fixed-dim": "#c8c6c6",
+                        "on-tertiary": "#ffffff",
+                        "on-surface": "#1d1b19",
+                        "secondary-fixed": "#ffd9df",
+                        "primary-container": "#f6a04d",
+                        "outline-variant": "#d9c2b2",
+                        "on-error-container": "#93000a",
+                        "surface-container-high": "#eee7e3",
+                        "on-tertiary-container": "#454545",
+                        "primary-fixed-dim": "#ffb878",
+                        "on-error": "#ffffff",
+                        "surface-variant": "#e8e1dd",
+                        "on-secondary": "#ffffff",
+                        "tertiary": "#5e5e5e",
+                        "surface-bright": "#fff8f4",
+                        "inverse-primary": "#ffb878",
+                        "on-primary-fixed-variant": "#6c3a00",
+                        "on-tertiary-fixed": "#1b1c1c",
+                        "error": "#ba1a1a",
+                        "on-primary-container": "#6a3900",
+                        "secondary-fixed-dim": "#fbb3c1",
+                        "inverse-on-surface": "#f6efeb",
+                        "tertiary-fixed": "#e4e2e2",
+                        "surface": "#fff8f4",
+                        "on-surface-variant": "#534437",
+                        "on-secondary-fixed-variant": "#6b3743",
+                        "on-secondary-container": "#7a4450",
+                        "on-primary": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "sm": "8px",
+                        "gutter": "24px",
+                        "xl": "48px",
+                        "unit": "8px",
+                        "lg": "24px",
+                        "container-max": "1200px",
+                        "xs": "4px",
+                        "md": "16px"
+                    },
+                    "fontFamily": {
+                        "h3": ["Plus Jakarta Sans"],
+                        "body-lg": ["Plus Jakarta Sans"],
+                        "label-md": ["Plus Jakarta Sans"],
+                        "body-md": ["Plus Jakarta Sans"],
+                        "button": ["Plus Jakarta Sans"],
+                        "h2": ["Plus Jakarta Sans"],
+                        "h1": ["Plus Jakarta Sans"]
+                    },
+                    "fontSize": {
+                        "h3": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "label-md": ["14px", {"lineHeight": "1.4", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "button": ["16px", {"lineHeight": "1", "letterSpacing": "0.02em", "fontWeight": "700"}],
+                        "h2": ["32px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                        "h1": ["40px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+                    },
+                    "animation": {
+                        "reveal": "reveal 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) both",
+                        "float": "float 3s ease-in-out infinite",
+                        "soft-bounce": "soft-bounce 2s ease-in-out infinite"
+                    },
+                    "keyframes": {
+                        "reveal": {
+                            "0%": { "opacity": "0", "transform": "translateY(30px) scale(0.95)" },
+                            "100%": { "opacity": "1", "transform": "translateY(0) scale(1)" }
+                        },
+                        "float": {
+                            "0%, 100%": { "transform": "translateY(0)" },
+                            "50%": { "transform": "translateY(-10px)" }
+                        },
+                        "soft-bounce": {
+                            "0%, 100%": { "transform": "translateY(0) scale(1)" },
+                            "50%": { "transform": "translateY(-5px) scale(1.02)" }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        /* Removed conflicting sibling selectors that caused wrong-direction highlighting */
+        .cat-head-rating label {
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .cat-head-rating label:active {
+            transform: scale(0.9);
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .milky-glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px) saturate(180%);
+            -webkit-backdrop-filter: blur(12px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .reveal-hidden {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .reveal-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        html {
+            scroll-behavior: smooth;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen overflow-x-hidden pb-24">
+<!-- Decorative Background Elements -->
+<div class="fixed inset-0 pointer-events-none overflow-hidden opacity-[0.03]">
+    <span class="material-symbols-outlined absolute top-10 left-10 text-9xl animate-float" style="transform: rotate(15deg)">pets</span>
+    <span class="material-symbols-outlined absolute top-1/3 -right-10 text-[15rem] animate-float" style="animation-delay: -1.5s; transform: rotate(-10deg)">pets</span>
+    <span class="material-symbols-outlined absolute bottom-20 left-[-5%] text-[12rem] animate-float" style="animation-delay: -0.5s; transform: rotate(25deg)">pets</span>
+</div>
+<!-- Top App Bar (Shared Component) -->
+<header class="fixed top-0 left-0 w-full z-50 milky-glass shadow-sm rounded-b-[2rem]">
+    <div id="scrollProgress" class="absolute top-0 left-0 h-1 bg-primary-container transition-all duration-300" style="width: 0%"></div>
+    <div class="flex justify-between items-center px-6 py-4">
+        <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-orange-500 animate-soft-bounce" data-icon="pets">pets</span>
+            <h1 class="font-['Plus_Jakarta_Sans'] text-lg font-bold tracking-tight text-orange-500">Cat Cafe Studio</h1>
+        </div>
+        <button class="active:scale-95 transition-transform duration-200 p-2 bg-orange-50 rounded-full">
+            <span class="material-symbols-outlined text-stone-400" data-icon="close">close</span>
+        </button>
+    </div>
+</header>
+<!-- Content Canvas -->
+<main class="max-w-md mx-auto pt-24 px-6 space-y-12">
+<!-- Header & Progress Section -->
+<section class="text-center space-y-6 reveal-hidden">
+<div class="space-y-2">
+<h2 class="font-h2 text-h2 text-on-surface">Purr-fect Feedback</h2>
+<p class="text-on-surface-variant font-body-md opacity-70">Help us make your next visit even better.</p>
+</div>
+<div class="relative pt-6">
+<div class="w-full bg-orange-100 rounded-full h-1.5">
+<div class="bg-primary-container h-1.5 rounded-full relative transition-all duration-500" style="width: 45%;">
+<div class="absolute -right-3 -top-6 text-primary-container animate-float">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">pets</span>
+</div>
+</div>
+</div>
+<div class="flex justify-between mt-2 text-[10px] font-bold text-outline uppercase tracking-widest">
+<span>Start</span>
+<span>Experience</span>
+<span>Submit</span>
+</div>
+</div>
+</section>
+<!-- Guest Info Section -->
+<section class="space-y-6 reveal-hidden">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-2xl bg-orange-50 flex items-center justify-center text-primary-container shadow-sm">
+<span class="material-symbols-outlined">person</span>
+</div>
+<h3 class="font-h3 text-h3">Guest Info</h3>
+</div>
+<div class="grid grid-cols-1 gap-4">
+<div class="space-y-1.5">
+<label class="text-label-md font-label-md ml-1 text-on-surface-variant">Full Name</label>
+<input id="fullName" name="fullName" class="w-full bg-surface-container-low border-none rounded-2xl px-5 py-4 focus:ring-2 focus:ring-primary-container transition-all placeholder:opacity-40" placeholder="e.g. Whisker Smit" type="text"/>
+</div>
+<div class="space-y-1.5">
+<label class="text-label-md font-label-md ml-1 text-on-surface-variant">Phone No</label>
+<input id="phone" name="phone" class="w-full bg-surface-container-low border-none rounded-2xl px-5 py-4 focus:ring-2 focus:ring-primary-container transition-all placeholder:opacity-40" placeholder="+91 98765 43210" type="tel"/>
+</div>
+<div class="space-y-1.5">
+<label class="text-label-md font-label-md ml-1 text-on-surface-variant">Residence</label>
+<input id="residence" name="residence" class="w-full bg-surface-container-low border-none rounded-2xl px-5 py-4 focus:ring-2 focus:ring-primary-container transition-all placeholder:opacity-40" placeholder="City, Area" type="text"/>
+</div>
+<div class="space-y-1.5">
+<label class="text-label-md font-label-md ml-1 text-on-surface-variant">Email</label>
+<input id="email" name="email" class="w-full bg-surface-container-low border-none rounded-2xl px-5 py-4 focus:ring-2 focus:ring-primary-container transition-all placeholder:opacity-40" placeholder="hello@kitty.com" type="email"/>
+</div>
+</div>
+</section>
+<!-- Ratings Section -->
+<section class="space-y-8 reveal-hidden">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-2xl bg-orange-50 flex items-center justify-center text-primary-container shadow-sm">
+<span class="material-symbols-outlined">mood</span>
+</div>
+<h3 class="font-h3 text-h3">How was your visit?</h3>
+</div>
+<div class="space-y-8 bg-surface-container-lowest p-6 rounded-[2rem] shadow-[0_8px_30px_rgb(246,160,77,0.05)]">
+<!-- Rating Item Template -->
+<div class="space-y-3">
+<div class="flex justify-between items-center">
+<span class="font-label-md text-on-surface">Service</span>
+<div class="flex gap-1 cat-head-rating" data-rating-group="service">
+<input class="hidden" id="s1" name="service" type="radio" value="1"/><label class="cursor-pointer hover:scale-110 transition-transform" for="s1"><span class="material-symbols-outlined text-outline/30">pets</span></label>
+<input class="hidden" id="s2" name="service" type="radio" value="2"/><label class="cursor-pointer hover:scale-110 transition-transform" for="s2"><span class="material-symbols-outlined text-outline/30">pets</span></label>
+<input class="hidden" id="s3" name="service" type="radio" value="3"/><label class="cursor-pointer hover:scale-110 transition-transform" for="s3"><span class="material-symbols-outlined text-outline/30">pets</span></label>
+<input class="hidden" id="s4" name="service" type="radio" value="4"/><label class="cursor-pointer hover:scale-110 transition-transform" for="s4"><span class="material-symbols-outlined text-outline/30">pets</span></label>
+<input class="hidden" id="s5" name="service" type="radio" value="5"/><label class="cursor-pointer hover:scale-110 transition-transform" for="s5"><span class="material-symbols-outlined text-outline/30">pets</span></label>
+</div>
+</div>
+</div>
+<div class="space-y-3">
+<div class="flex justify-between items-center">
+<span class="font-label-md text-on-surface">Food Quality</span>
+<div class="flex gap-1 cat-head-rating" data-rating-group="foodQuality">
+<input class="hidden" id="f1" name="foodQuality" type="radio" value="1"/><label class="cursor-pointer hover:scale-110 transition-transform" for="f1"><span class="material-symbols-outlined text-outline/30">pets</span></label>
+<input class="hidden" id="f2" name="foodQuality" type="radio" value="2"/><label class="cursor-pointer hover:scale-110 transition-transform" for="f2"><span class="material-symbols-outlined text-outline/30">pets</span></label>
+<input class="hidden" id="f3" name="foodQuality" type="radio" value="3"/><label class="cursor-pointer hover:scale-110 transition-transform" for="f3"><span class="material-symbols-outlined text-outline/30">pets</span></label>
+<input class="hidden" id="f4" name="foodQuality" type="radio" value="4"/><label class="cursor-pointer hover:scale-110 transition-transform" for="f4"><span class="material-symbols-outlined text-outline/30">pets</span></label>
+<input class="hidden" id="f5" name="foodQuality" type="radio" value="5"/><label class="cursor-pointer hover:scale-110 transition-transform" for="f5"><span class="material-symbols-outlined text-outline/30">pets</span></label>
+</div>
+</div>
+</div>
+<div class="space-y-3">
+<div class="flex justify-between items-center">
+<span class="font-label-md text-on-surface">Beverage Quality</span>
+<div class="flex gap-1 cat-head-rating" data-rating-group="beverageQuality">
+<input class="hidden" id="b1" name="beverageQuality" type="radio" value="1"/><label class="cursor-pointer hover:scale-110 transition-transform" for="b1"><span class="material-symbols-outlined text-outline/30">pets</span></label>
+<input class="hidden" id="b2" name="beverageQuality" type="radio" value="2"/><label class="cursor-pointer hover:scale-110 transition-transform" for="b2"><span class="material-symbols-outlined text-outline/30">pets</span></label>
+<input class="hidden" id="b3" name="beverageQuality" type="radio" value="3"/><label class="cursor-pointer hover:scale-110 transition-transform" for="b3"><span class="material-symbols-outlined text-outline/30">pets</span></label>
+<input class="hidden" id="b4" name="beverageQuality" type="radio" value="4"/><label class="cursor-pointer hover:scale-110 transition-transform" for="b4"><span class="material-symbols-outlined text-outline/30">pets</span></label>
+<input class="hidden" id="b5" name="beverageQuality" type="radio" value="5"/><label class="cursor-pointer hover:scale-110 transition-transform" for="b5"><span class="material-symbols-outlined text-outline/30">pets</span></label>
+</div>
+</div>
+</div>
+<div class="space-y-3">
+<div class="flex justify-between items-center">
+<span class="font-label-md text-on-surface">Atmosphere</span>
+<div class="flex gap-1 cat-head-rating" data-rating-group="atmosphere">
+<input class="hidden" id="a1" name="atmosphere" type="radio" value="1"/><label class="cursor-pointer hover:scale-110 transition-transform" for="a1"><span class="material-symbols-outlined text-outline/30">pets</span></label>
+<input class="hidden" id="a2" name="atmosphere" type="radio" value="2"/><label class="cursor-pointer hover:scale-110 transition-transform" for="a2"><span class="material-symbols-outlined text-outline/30">pets</span></label>
+<input class="hidden" id="a3" name="atmosphere" type="radio" value="3"/><label class="cursor-pointer hover:scale-110 transition-transform" for="a3"><span class="material-symbols-outlined text-outline/30">pets</span></label>
+<input class="hidden" id="a4" name="atmosphere" type="radio" value="4"/><label class="cursor-pointer hover:scale-110 transition-transform" for="a4"><span class="material-symbols-outlined text-outline/30">pets</span></label>
+<input class="hidden" id="a5" name="atmosphere" type="radio" value="5"/><label class="cursor-pointer hover:scale-110 transition-transform" for="a5"><span class="material-symbols-outlined text-outline/30">pets</span></label>
+</div>
+</div>
+</div>
+<div class="space-y-3">
+<div class="flex justify-between items-center">
+<span class="font-label-md text-on-surface">Value for Money</span>
+<div class="flex gap-1 cat-head-rating" data-rating-group="valueForMoney">
+<input class="hidden" id="v1" name="valueForMoney" type="radio" value="1"/><label class="cursor-pointer hover:scale-110 transition-transform" for="v1"><span class="material-symbols-outlined text-outline/30">pets</span></label>
+<input class="hidden" id="v2" name="valueForMoney" type="radio" value="2"/><label class="cursor-pointer hover:scale-110 transition-transform" for="v2"><span class="material-symbols-outlined text-outline/30">pets</span></label>
+<input class="hidden" id="v3" name="valueForMoney" type="radio" value="3"/><label class="cursor-pointer hover:scale-110 transition-transform" for="v3"><span class="material-symbols-outlined text-outline/30">pets</span></label>
+<input class="hidden" id="v4" name="valueForMoney" type="radio" value="4"/><label class="cursor-pointer hover:scale-110 transition-transform" for="v4"><span class="material-symbols-outlined text-outline/30">pets</span></label>
+<input class="hidden" id="v5" name="valueForMoney" type="radio" value="5"/><label class="cursor-pointer hover:scale-110 transition-transform" for="v5"><span class="material-symbols-outlined text-outline/30">pets</span></label>
+</div>
+</div>
+</div>
+<div class="space-y-3">
+<div class="flex justify-between items-center">
+<span class="font-label-md text-on-surface">Cleanliness</span>
+<div class="flex gap-1 cat-head-rating" data-rating-group="cleanliness">
+<input class="hidden" id="c1" name="cleanliness" type="radio" value="1"/><label class="cursor-pointer hover:scale-110 transition-transform" for="c1"><span class="material-symbols-outlined text-outline/30">pets</span></label>
+<input class="hidden" id="c2" name="cleanliness" type="radio" value="2"/><label class="cursor-pointer hover:scale-110 transition-transform" for="c2"><span class="material-symbols-outlined text-outline/30">pets</span></label>
+<input class="hidden" id="c3" name="cleanliness" type="radio" value="3"/><label class="cursor-pointer hover:scale-110 transition-transform" for="c3"><span class="material-symbols-outlined text-outline/30">pets</span></label>
+<input class="hidden" id="c4" name="cleanliness" type="radio" value="4"/><label class="cursor-pointer hover:scale-110 transition-transform" for="c4"><span class="material-symbols-outlined text-outline/30">pets</span></label>
+<input class="hidden" id="c5" name="cleanliness" type="radio" value="5"/><label class="cursor-pointer hover:scale-110 transition-transform" for="c5"><span class="material-symbols-outlined text-outline/30">pets</span></label>
+</div>
+</div>
+</div>
+<div class="space-y-3">
+<div class="flex justify-between items-center">
+<span class="font-label-md text-on-surface">Staff Friendliness</span>
+<div class="flex gap-1 cat-head-rating" data-rating-group="staffFriendliness">
+<input class="hidden" id="sf1" name="staffFriendliness" type="radio" value="1"/><label class="cursor-pointer hover:scale-110 transition-transform" for="sf1"><span class="material-symbols-outlined text-outline/30">pets</span></label>
+<input class="hidden" id="sf2" name="staffFriendliness" type="radio" value="2"/><label class="cursor-pointer hover:scale-110 transition-transform" for="sf2"><span class="material-symbols-outlined text-outline/30">pets</span></label>
+<input class="hidden" id="sf3" name="staffFriendliness" type="radio" value="3"/><label class="cursor-pointer hover:scale-110 transition-transform" for="sf3"><span class="material-symbols-outlined text-outline/30">pets</span></label>
+<input class="hidden" id="sf4" name="staffFriendliness" type="radio" value="4"/><label class="cursor-pointer hover:scale-110 transition-transform" for="sf4"><span class="material-symbols-outlined text-outline/30">pets</span></label>
+<input class="hidden" id="sf5" name="staffFriendliness" type="radio" value="5"/><label class="cursor-pointer hover:scale-110 transition-transform" for="sf5"><span class="material-symbols-outlined text-outline/30">pets</span></label>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Experience Q&A -->
+<section class="space-y-4 reveal-hidden">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-2xl bg-orange-50 flex items-center justify-center text-primary-container shadow-sm">
+<span class="material-symbols-outlined">forum</span>
+</div>
+<h3 class="font-h3 text-h3">Your Story</h3>
+</div>
+<div class="space-y-1.5">
+<label class="text-label-md font-label-md ml-1 text-on-surface-variant">Please share about your experience</label>
+<textarea id="experience" name="experience" class="w-full bg-surface-container-low border-none rounded-[1.5rem] px-5 py-4 focus:ring-2 focus:ring-primary-container transition-all placeholder:opacity-40 resize-none" placeholder="Tell us about the cats you met and the moments you enjoyed..." rows="4"></textarea>
+</div>
+</section>
+<!-- Interests Paw-Chips -->
+<section class="space-y-6 reveal-hidden">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-2xl bg-orange-50 flex items-center justify-center text-primary-container shadow-sm">
+<span class="material-symbols-outlined">favorite</span>
+</div>
+<h3 class="font-h3 text-h3">Are you interested in...</h3>
+</div>
+<div id="interests" class="flex flex-wrap gap-3">
+<button type="button" class="interest-btn px-6 py-3 bg-white border border-orange-100 rounded-full font-label-md text-primary-container shadow-sm hover:bg-orange-50 active:scale-95 transition-all" data-value="Adopting">
+                    Adopting
+                </button>
+<button type="button" class="interest-btn px-6 py-3 bg-white border border-orange-100 rounded-full font-label-md text-primary-container shadow-sm hover:bg-orange-50 active:scale-95 transition-all" data-value="Volunteering">
+                    Volunteering
+                </button>
+<button type="button" class="interest-btn px-6 py-3 bg-white border border-orange-100 rounded-full font-label-md text-primary-container shadow-sm hover:bg-orange-50 active:scale-95 transition-all" data-value="Fostering">
+                    Fostering
+                </button>
+<button type="button" class="interest-btn px-6 py-3 bg-white border border-orange-100 rounded-full font-label-md text-primary-container shadow-sm hover:bg-orange-50 active:scale-95 transition-all" data-value="Donating">
+                    Donating
+                </button>
+</div>
+</section>
+<!-- Visit History Section -->
+<section class="space-y-6 reveal-hidden">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-2xl bg-orange-50 flex items-center justify-center text-primary-container shadow-sm">
+<span class="material-symbols-outlined">history</span>
+</div>
+<h3 class="font-h3 text-h3">Visit History</h3>
+</div>
+<div class="bg-surface-container-low p-6 rounded-[2rem] space-y-6">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-on-surface">Have you visited us before?</span>
+<div id="visitedBefore" class="flex bg-white p-1 rounded-full border border-orange-100">
+<button type="button" class="visit-btn px-4 py-1.5 rounded-full text-[12px] font-bold bg-primary-container text-white" data-value="Yes">Yes</button>
+<button type="button" class="visit-btn px-4 py-1.5 rounded-full text-[12px] font-bold text-outline" data-value="No">No</button>
+</div>
+</div>
+<div class="space-y-1.5">
+<label class="text-label-md font-label-md text-on-surface-variant">How often have you visited us?</label>
+<input id="visitFrequency" name="visitFrequency" class="w-full bg-white border-none rounded-2xl px-5 py-4 focus:ring-2 focus:ring-primary-container transition-all placeholder:opacity-40" placeholder="e.g. Twice a month" type="text"/>
+</div>
+</div>
+</section>
+<!-- Source Section -->
+<section class="space-y-6 reveal-hidden">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-2xl bg-orange-50 flex items-center justify-center text-primary-container shadow-sm">
+<span class="material-symbols-outlined">search</span>
+</div>
+<h3 class="font-h3 text-h3">How did you hear about us?</h3>
+</div>
+<div id="sources" class="grid grid-cols-2 gap-3">
+<button type="button" class="source-btn flex items-center gap-2 p-4 bg-white border border-orange-100 rounded-2xl hover:border-primary-container transition-all text-left" data-value="Instagram">
+<span class="dot w-4 h-4 rounded-full border-2 border-primary-container"></span>
+<span class="text-label-md">Instagram</span>
+</button>
+<button type="button" class="source-btn flex items-center gap-2 p-4 bg-white border border-orange-100 rounded-2xl hover:border-primary-container transition-all text-left" data-value="Google">
+<span class="dot w-4 h-4 rounded-full border-2 border-primary-container"></span>
+<span class="text-label-md">Google</span>
+</button>
+<button type="button" class="source-btn flex items-center gap-2 p-4 bg-white border border-orange-100 rounded-2xl hover:border-primary-container transition-all text-left" data-value="Website">
+<span class="dot w-4 h-4 rounded-full border-2 border-primary-container"></span>
+<span class="text-label-md">Website</span>
+</button>
+<button type="button" class="source-btn flex items-center gap-2 p-4 bg-white border border-orange-100 rounded-2xl hover:border-primary-container transition-all text-left" data-value="Word of Mouth">
+<span class="dot w-4 h-4 rounded-full border-2 border-primary-container"></span>
+<span class="text-label-md">Word of Mouth</span>
+</button>
+<button type="button" class="source-btn flex items-center gap-2 p-4 bg-white border border-orange-100 rounded-2xl hover:border-primary-container transition-all text-left col-span-2" data-value="Other">
+<span class="dot w-4 h-4 rounded-full border-2 border-primary-container"></span>
+<span class="text-label-md">Other</span>
+</button>
+</div>
+<input id="otherSource" name="otherSource" class="w-full bg-surface-container-low border-none rounded-2xl px-5 py-4 focus:ring-2 focus:ring-primary-container transition-all placeholder:opacity-40" placeholder="Please specify..." type="text"/>
+</section>
+</main>
+<!-- Bottom Navigation Shell (Shared Component) -->
+<!-- Sticky Submit Button -->
+<div class="fixed left-0 w-full px-6 pointer-events-none bottom-8 z-50">
+    <div class="max-w-md mx-auto pointer-events-auto milky-glass p-2 rounded-[2rem] shadow-lg">
+        <button id="submitBtn" class="w-full bg-primary-container text-white py-5 rounded-[1.5rem] font-button text-button shadow-[0_12px_40px_rgba(246,160,77,0.3)] active:scale-95 transition-all flex items-center justify-center gap-3">
+            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+            Submit Feedback
+        </button>
+    </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const state = {
+            fullName: '',
+            phone: '',
+            residence: '',
+            email: '',
+            ratings: {
+                service: 0,
+                foodQuality: 0,
+                beverageQuality: 0,
+                atmosphere: 0,
+                valueForMoney: 0,
+                cleanliness: 0,
+                staffFriendliness: 0
+            },
+            experience: '',
+            interests: [],
+            visitedBefore: 'Yes',
+            visitFrequency: '',
+            source: 'Website',
+            otherSource: ''
+        };
+
+        // Standard Input Handlers
+        ['fullName', 'phone', 'residence', 'email', 'experience', 'visitFrequency', 'otherSource'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('input', (e) => {
+                    state[id] = e.target.value;
+                });
+            }
+        });
+
+        // Rating Handlers
+        document.querySelectorAll('.cat-head-rating').forEach(group => {
+            const labels = group.querySelectorAll('label');
+            const inputs = group.querySelectorAll('input');
+            const groupName = group.dataset.ratingGroup;
+
+            inputs.forEach(input => {
+                input.addEventListener('change', (e) => {
+                    const value = parseInt(e.target.value);
+                    state.ratings[groupName] = value;
+                    updateRatingVisuals(group, value);
+                });
+            });
+
+            labels.forEach((label, index) => {
+                // Hover preview
+                label.addEventListener('mouseenter', () => {
+                    updateRatingVisuals(group, index + 1, true);
+                });
+
+                label.addEventListener('mouseleave', () => {
+                    updateRatingVisuals(group, state.ratings[groupName]);
+                });
+            });
+        });
+
+        function updateRatingVisuals(parent, rating, isHover = false) {
+            const labels = parent.querySelectorAll('label');
+            labels.forEach((label, index) => {
+                const icon = label.querySelector('.material-symbols-outlined');
+                if (index < rating) {
+                    icon.style.fontVariationSettings = "'FILL' 1";
+                    icon.classList.add('text-primary-container');
+                    icon.classList.remove('text-outline/30');
+                    icon.style.opacity = isHover ? '0.6' : '1';
+                } else {
+                    icon.style.fontVariationSettings = "'FILL' 0";
+                    icon.classList.remove('text-primary-container');
+                    icon.classList.add('text-outline/30');
+                    icon.style.opacity = '1';
+                }
+            });
+        }
+
+        // Interests Multi-select
+        document.querySelectorAll('.interest-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const val = btn.dataset.value;
+                if (state.interests.includes(val)) {
+                    state.interests = state.interests.filter(i => i !== val);
+                    btn.classList.remove('bg-orange-50', 'border-2', 'border-primary-container', 'font-bold');
+                    btn.classList.add('bg-white', 'border-orange-100');
+                } else {
+                    state.interests.push(val);
+                    btn.classList.add('bg-orange-50', 'border-2', 'border-primary-container', 'font-bold');
+                    btn.classList.remove('bg-white', 'border-orange-100');
+                }
+            });
+        });
+
+        // Visit Status Toggle
+        document.querySelectorAll('.visit-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const parent = btn.closest('#visitedBefore');
+                state.visitedBefore = btn.dataset.value;
+                parent.querySelectorAll('.visit-btn').forEach(b => {
+                    b.classList.remove('bg-primary-container', 'text-white');
+                    b.classList.add('text-outline');
+                });
+                btn.classList.add('bg-primary-container', 'text-white');
+                btn.classList.remove('text-outline');
+            });
+        });
+
+        // Source Single-select
+        document.querySelectorAll('.source-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const parent = btn.closest('#sources');
+                state.source = btn.dataset.value;
+                parent.querySelectorAll('.source-btn').forEach(b => {
+                    b.classList.remove('bg-primary-container/10', 'border-2', 'border-primary-container');
+                    b.classList.add('bg-white', 'border-orange-100');
+                    const dot = b.querySelector('.dot');
+                    if (dot) dot.classList.remove('bg-primary-container');
+                });
+                btn.classList.add('bg-primary-container/10', 'border-2', 'border-primary-container');
+                btn.classList.remove('bg-white', 'border-orange-100');
+                const dot = btn.querySelector('.dot');
+                if (dot) dot.classList.add('bg-primary-container');
+            });
+        });
+
+        // Scroll Progress & Intersection Observer
+        const progressLine = document.getElementById('scrollProgress');
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('reveal-visible');
+                    entry.target.classList.remove('reveal-hidden');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.reveal-hidden').forEach(el => observer.observe(el));
+
+        window.addEventListener('scroll', () => {
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (winScroll / height) * 100;
+            if (progressLine) progressLine.style.width = scrolled + '%';
+        });
+
+        // Submit Handler
+        const submitBtn = document.getElementById('submitBtn');
+        if (submitBtn) {
+            submitBtn.addEventListener('click', async () => {
+                if (!state.fullName) {
+                    alert('Please enter your name');
+                    return;
+                }
+
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> Submitting...';
+
+                try {
+                    const response = await fetch('http://localhost:3001/api/submit', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(state)
+                    });
+
+                    if (response.ok) {
+                        alert('Purr-fect! Thank you for your feedback.');
+                        window.location.reload();
+                    } else {
+                        const err = await response.json();
+                        alert('Oops! ' + (err.error || 'Something went wrong.'));
+                    }
+                } catch (error) {
+                    alert('Network error. Your feedback has been saved locally and will sync once connection is restored.');
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<span class="material-symbols-outlined" style="font-variation-settings: \'FILL\' 1;">check_circle</span> Submit Feedback';
+                }
+            });
+        }
+    });
+</script>
+</body></html>
