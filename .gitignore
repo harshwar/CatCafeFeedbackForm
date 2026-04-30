@@ -1,5 +1,6 @@
 node_modules/
 .env
-*.json_key (or whatever your Google JSON file is named)
+backend/credentials.json
 dist/
 build/
+*.log
