@@ -7,26 +7,27 @@ import React, { useMemo } from 'react';
 export const BackgroundPaws = () => {
   const paws = useMemo(() => {
     const items = [];
-    const rows = 4;
-    const cols = 4;
+    const rows = 3; // Fewer rows
+    const cols = 3; // Fewer columns
     
-    // Grid-based placement to avoid overlap
+    // Grid-based placement with fewer items to avoid clutter
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
         items.push({
           id: `${r}-${c}`,
-          left: `${(c / cols) * 100 + (Math.random() * (100 / cols) * 0.6)}%`,
-          top: `${(r / rows) * 100 + (Math.random() * (100 / rows) * 0.6)}%`,
+          left: `${(c / cols) * 100 + (Math.random() * (100 / cols) * 0.4)}%`,
+          top: `${(r / rows) * 100 + (Math.random() * (100 / rows) * 0.4)}%`,
           delay: `${Math.random() * -30}s`,
-          duration: `${40 + Math.random() * 40}s`,
-          scale: 0.5 + Math.random() * 1.3, // Varied size (0.5 to 1.8)
-          rotation: Math.random() * 360, // Full 360 rotation
-          opacity: 0.75
+          duration: `${50 + Math.random() * 50}s`, // Slower, calmer movement
+          scale: 0.8, // Fixed size to avoid giant paws
+          rotation: Math.random() * 360,
+          opacity: 0.35 // Much lower opacity to be less intrusive
         });
       }
     }
     return items;
   }, []);
+
 
 
   return (
