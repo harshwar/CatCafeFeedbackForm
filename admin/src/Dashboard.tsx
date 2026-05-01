@@ -154,10 +154,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ insights, onNavigate }) =>
  <div className="flex justify-between items-start mb-2">
  <div className="flex items-center gap-3">
  <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${idx === 0 ? 'bg-orange-100 text-orange-600' : 'bg-stone-200 text-stone-600'}`}>
- {fb.fullName.split(' ').map(n => n[0]).join('')}
+ {(fb.fullName || 'User').split(' ').filter(Boolean).map(n => n[0]).join('')}
  </div>
  <div>
- <p className="font-bold text-on-surface text-sm">{fb.fullName}</p>
+ <p className="font-bold text-on-surface text-sm">{fb.fullName || 'Anonymous'}</p>
  <p className="text-[10px] text-stone-500 uppercase font-bold">{fb.timestamp}</p>
  </div>
  </div>
