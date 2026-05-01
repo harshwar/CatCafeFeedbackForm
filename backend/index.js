@@ -10,6 +10,7 @@ require('dotenv').config();
 const { generateReportPDF } = require('./exportPdf');
 
 const app = express();
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3001;
 const GOOGLE_SHEET_ID = process.env.GOOGLE_SHEET_ID;
 const ALLOWED_ORIGIN = process.env.CORS_ORIGIN || '*';
