@@ -28,7 +28,11 @@ export const Reports: React.FC<Props> = ({ feedbacks }) => {
     setIsExporting(true);
     try {
       const response = await fetch(`${API_URL}/api/export-pdf`);
-      if (!response.ok) throw new Error('PDF Export failed');
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.details || 'Backend failed to generate PDF');
+      }
       
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -39,9 +43,9 @@ export const Reports: React.FC<Props> = ({ feedbacks }) => {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Backend PDF Export failed:', error);
-      alert('Could not generate PDF. Please check if the backend is running.');
+      alert(`PDF Export failed: ${error.message}`);
     } finally {
       setIsExporting(false);
     }
