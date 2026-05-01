@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { BackgroundPaws } from './components/BackgroundPaws';
 import { Dashboard } from './Dashboard';
@@ -7,7 +7,7 @@ import { FeedbackList } from './FeedbackList';
 import { CustomerInsights } from './CustomerInsights';
 import { Reports } from './Reports';
 import { NotificationPanel } from './components/NotificationPanel';
-import { Bell, Loader2, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Bell, AlertTriangle, RefreshCw } from 'lucide-react';
 import { DashboardSkeleton } from './components/SkeletonLoader';
 import { MobileNav } from './components/MobileNav';
 
