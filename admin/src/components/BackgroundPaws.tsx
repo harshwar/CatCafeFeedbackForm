@@ -7,6 +7,7 @@ import React, { useMemo } from 'react';
  */
 export const BackgroundPaws = () => {
   const paws = useMemo(() => {
+    console.log('BackgroundPaws: Generating 12 paws...');
     return [...Array(12)].map((_, i) => ({
       id: i,
       left: `${Math.random() * 100}%`,
@@ -15,16 +16,16 @@ export const BackgroundPaws = () => {
       duration: `${25 + Math.random() * 25}s`,
       scale: 0.5 + Math.random() * 1.2,
       rotation: Math.random() * 360,
-      opacity: 0.02 + Math.random() * 0.04
+      opacity: 0.08 + Math.random() * 0.12
     }));
   }, []);
 
   return (
-    <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10 select-none">
+    <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10 select-none bg-transparent">
       {paws.map((paw) => (
         <div
           key={paw.id}
-          className="absolute animate-float text-orange-500"
+          className="absolute animate-float text-orange-200"
           style={{
             left: paw.left,
             top: paw.top,
