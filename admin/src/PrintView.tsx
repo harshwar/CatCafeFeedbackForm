@@ -80,12 +80,12 @@ export const PrintView: React.FC<PrintViewProps> = ({ insights }) => {
       </section>
 
       {/* Operations Analysis */}
-      <div className="grid grid-cols-2 gap-10 mb-12">
+      <div className="flex flex-col gap-10 mb-12">
         <section>
           <h2 className="text-xl font-bold text-stone-800 mb-6 flex items-center gap-2">
             <Target size={20} className="text-orange-500" /> Operations Radar
           </h2>
-          <div className="bg-white border border-stone-100 p-6 rounded-[2rem] h-[350px]">
+          <div className="bg-white border border-stone-100 p-8 rounded-[2rem] shadow-sm" style={{ width: '900px', height: '450px' }}>
             <OperationsRadarChart data={radarData} />
           </div>
         </section>
@@ -93,7 +93,7 @@ export const PrintView: React.FC<PrintViewProps> = ({ insights }) => {
           <h2 className="text-xl font-bold text-stone-800 mb-6 flex items-center gap-2">
             <TrendingUp size={20} className="text-orange-500" /> Source ROI
           </h2>
-          <div className="bg-white border border-stone-100 p-6 rounded-[2rem] h-[350px]">
+          <div className="bg-white border border-stone-100 p-8 rounded-[2rem] shadow-sm" style={{ width: '900px', height: '450px' }}>
             <StandardBarChart data={sourceROIData} dataKey="avgRating" nameKey="source" fillColor="#fb923c" yAxisDomain={[0, 5]} />
           </div>
         </section>

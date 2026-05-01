@@ -14,6 +14,9 @@ async function generateReportPDF(frontendUrl) {
   try {
     const page = await browser.newPage();
     
+    // Set a large viewport to ensure charts have space to calculate dimensions
+    await page.setViewport({ width: 1200, height: 1600 });
+    
     // Navigate to the special print view
     const printUrl = `${frontendUrl.replace(/\/$/, '')}/?view=print`;
     console.log(`[PDF] Navigating to: ${printUrl}`);
