@@ -240,6 +240,8 @@ app.get('/api/insights', async (req, res) => {
             .sort((a, b) => a.avgRating - b.avgRating)
             .slice(0, 3);
 
+        log.data(`Top Comments: commentedCount=${commentedFeedback.length}, best=${best.length}, worst=${worst.length}`);
+
         // Returning Visitors Rate
         const returningCount = excelData.filter(row => row.visitedBefore?.toLowerCase().includes('yes')).length;
         const returningRate = total > 0 ? Math.round((returningCount / total) * 100) : 0;
