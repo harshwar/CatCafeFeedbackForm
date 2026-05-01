@@ -53,8 +53,23 @@ if (fs.existsSync(credPath)) {
 }
 
 // Initialize Google Sheets API
+let googleCredentials = null;
+const credPath = path.join(__dirname, 'credentials.json');
+
+if (process.env.GOOGLE_CREDENTIALS) {
+    try {
+        googleCredentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
+        log.ok('Using credentials from GOOGLE_CREDENTIALS environment variable');
+    } catch (e) {
+        log.error('Failed to parse GOOGLE_CREDENTIALS environment variable');
+    }
+} else if (fs.existsSync(credPath)) {
+    googleCredentials = require(credPath);
+    log.ok('Using credentials from credentials.json file');
+}
+
 const auth = new google.auth.GoogleAuth({
-    keyFile: credPath,
+    credentials: googleCredentials,
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
 });
 const sheets = google.sheets({ version: 'v4', auth });
@@ -171,8 +186,16 @@ app.get('/api/insights', async (req, res) => {
         const rows = response.data.values;
         let excelData = [];
 
+        const toCamelCase = (str) => {
+            return str.toLowerCase()
+                .replace(/[^a-zA-Z0-9]+(.)/g, (m, chr) => chr.toUpperCase())
+                .trim();
+        };
+
         if (rows && rows.length > 1) {
-            const headers = rows[0];
+            const rawHeaders = rows[0];
+            const headers = rawHeaders.map(h => toCamelCase(h));
+            
             excelData = rows.slice(1).map(row => {
                 const rowObj = {};
                 headers.forEach((header, index) => { rowObj[header] = row[index] || ''; });
@@ -199,6 +222,25 @@ app.get('/api/insights', async (req, res) => {
         const satisfactionScore = total > 0 ? Math.round((satisfiedCount / total) * 100) : 0;
         log.data(`Satisfaction: ${satisfiedCount}/${total} rated avg>=4.0 → ${satisfactionScore}%`);
 
+        // Top Comments calculation
+        const feedbackWithAvg = excelData.map(row => {
+            const scores = SCORE_KEYS.map(k => parseFloat(row[k])).filter(s => !isNaN(s));
+            const avg = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+            return { ...row, avgRating: avg };
+        });
+
+        // Filter for comments that actually have text and sort
+        const commentedFeedback = feedbackWithAvg.filter(fb => fb.experience && fb.experience.length > 10);
+        
+        const best = [...commentedFeedback]
+            .sort((a, b) => b.avgRating - a.avgRating)
+            .slice(0, 3);
+            
+        const worst = [...commentedFeedback]
+            .filter(fb => fb.avgRating < 3.0) // Only show actually negative/mediocre reviews in improvement
+            .sort((a, b) => a.avgRating - b.avgRating)
+            .slice(0, 3);
+
         // Returning Visitors Rate
         const returningCount = excelData.filter(row => row.visitedBefore?.toLowerCase().includes('yes')).length;
         const returningRate = total > 0 ? Math.round((returningCount / total) * 100) : 0;
@@ -217,6 +259,10 @@ app.get('/api/insights', async (req, res) => {
                 avgRating: parseFloat(avgRating),
                 satisfaction: satisfactionScore,
                 returningRate
+            },
+            topComments: {
+                best,
+                worst
             },
             allFeedback: [...excelData].reverse()
         });
