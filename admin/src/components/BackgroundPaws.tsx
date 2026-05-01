@@ -13,9 +13,9 @@ export const BackgroundPaws = () => {
       top: `${Math.random() * 100}%`,
       delay: `${Math.random() * -20}s`,
       duration: `${30 + Math.random() * 30}s`,
-      scale: 0.8 + Math.random() * 1.2,
+      scale: 0.8 + Math.random() * 1.5,
       rotation: Math.random() * 360,
-      opacity: 1.0 // 100% opacity as requested
+      opacity: 0.75 // 75% opacity for a softer look
     }));
   }, []);
 
@@ -24,7 +24,7 @@ export const BackgroundPaws = () => {
       {paws.map((paw) => (
         <div
           key={paw.id}
-          className="absolute animate-float text-[#5a2e17]" // Deep espresso brown
+          className="absolute animate-float text-[#FFB38E]" // Warm peach/orange
           style={{
             left: paw.left,
             top: paw.top,
@@ -35,13 +35,18 @@ export const BackgroundPaws = () => {
             '--initial-rotation': `${paw.rotation}deg`
           } as React.CSSProperties}
         >
-          <PawPrint 
-            size={100} 
-            strokeWidth={0} 
-            fill="currentColor" 
-          />
+          <svg width="120" height="120" viewBox="0 0 24 24" fill="currentColor">
+            {/* Main large pad - softer rounded bean shape */}
+            <path d="M12 13.5c-2.5 0-4.5 1.5-4.5 4s2 4.5 4.5 4.5 4.5-2 4.5-4.5-2-4-4.5-4z" />
+            {/* 4 Larger, oval-shaped toes */}
+            <ellipse cx="7" cy="10" rx="2.5" ry="3.2" />
+            <ellipse cx="10.5" cy="7" rx="2.5" ry="3.2" />
+            <ellipse cx="14.5" cy="7" rx="2.5" ry="3.2" />
+            <ellipse cx="18" cy="10" rx="2.5" ry="3.2" />
+          </svg>
         </div>
       ))}
     </div>
+
   );
 };
