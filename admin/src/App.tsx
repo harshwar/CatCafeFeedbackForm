@@ -8,6 +8,8 @@ import { CustomerInsights } from './CustomerInsights';
 import { Reports } from './Reports';
 import { NotificationPanel } from './components/NotificationPanel';
 import { Bell, Loader2, AlertTriangle, RefreshCw } from 'lucide-react';
+import { DashboardSkeleton } from './components/SkeletonLoader';
+import { MobileNav } from './components/MobileNav';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 const POLL_INTERVAL_MS = 30_000; // auto-refresh every 30 seconds
@@ -89,14 +91,21 @@ function App() {
 
   const timeAgo = useTimeAgo(lastUpdated);
 
-  // Compute unread badges
+  // Compute unread badges (Memoized)
   const feedbacks = insights?.allFeedback || [];
-  const newSubmissions = lastVisit ? feedbacks.filter(fb => new Date(fb.timestamp) > lastVisit).length : 0;
-  const needsAttention = feedbacks.filter(fb => {
-    const scores = [fb.service, fb.foodQuality, fb.beverageQuality, fb.atmosphere, fb.valueForMoney, fb.cleanliness, fb.staffFriendliness];
-    const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
-    return avg <= 3.0;
-  }).length;
+  const { newSubmissions, needsAttention } = useMemo(() => {
+    if (!feedbacks.length) return { newSubmissions: 0, needsAttention: 0 };
+    
+    const newCount = lastVisit ? feedbacks.filter(fb => new Date(fb.timestamp) > lastVisit).length : 0;
+    const attentionCount = feedbacks.filter(fb => {
+      const scores = [fb.service, fb.foodQuality, fb.beverageQuality, fb.atmosphere, fb.valueForMoney, fb.cleanliness, fb.staffFriendliness];
+      const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+      return avg <= 3.0;
+    }).length;
+    
+    return { newSubmissions: newCount, needsAttention: attentionCount };
+  }, [feedbacks, lastVisit]);
+
   const unreadCount = newSubmissions + needsAttention;
 
   return (
@@ -158,13 +167,10 @@ function App() {
         <Sidebar currentView={currentView} onNavigate={setCurrentView} />
 
         {/* Main Content */}
-        <main className="lg:pl-64 w-full">
+        <main className="lg:pl-64 w-full pb-20 lg:pb-0">
           <div className="p-8 max-w-7xl mx-auto">
             {loading && !insights ? (
-              <div className="flex flex-col items-center justify-center h-[60vh] text-orange-400">
-                <Loader2 size={48} className="animate-spin mb-4" />
-                <p className="text-stone-500 font-medium">Loading live data from Google Sheets...</p>
-              </div>
+              <DashboardSkeleton />
             ) : error && !insights ? (
               <div className="flex flex-col items-center justify-center h-[60vh] text-stone-400">
                 <AlertTriangle size={48} className="mb-4 text-orange-400" />
@@ -196,6 +202,7 @@ function App() {
           </div>
         </main>
       </div>
+      <MobileNav currentView={currentView} onNavigate={setCurrentView} />
     </div>
   )
 }

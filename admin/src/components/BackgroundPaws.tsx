@@ -43,7 +43,8 @@ export const BackgroundPaws = () => {
             animationDuration: paw.duration,
             opacity: paw.opacity,
             '--initial-scale': paw.scale,
-            '--initial-rotation': `${paw.rotation}deg`
+            '--initial-rotation': `${paw.rotation}deg`,
+            willChange: 'transform'
           } as React.CSSProperties}
         >
           <svg width="150" height="150" viewBox="0 0 48.839 48.839" fill="currentColor">

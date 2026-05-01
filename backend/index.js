@@ -4,11 +4,14 @@ const morgan = require('morgan');
 const fs = require('fs');
 const path = require('path');
 const { google } = require('googleapis');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 const GOOGLE_SHEET_ID = process.env.GOOGLE_SHEET_ID;
+const ALLOWED_ORIGIN = process.env.CORS_ORIGIN || '*';
 
 // ─── Colour helpers (no extra deps) ──────────────────────────────────────────
 const c = {
@@ -33,12 +36,10 @@ const log = {
 process.on('uncaughtException', (err) => {
   log.error(`Uncaught Exception: ${err.message}`);
   console.error(err.stack);
-  // Do NOT exit — keep server alive
 });
 process.on('unhandledRejection', (reason) => {
   log.error(`Unhandled Promise Rejection: ${reason?.message || reason}`);
   if (reason?.stack) console.error(reason.stack);
-  // Do NOT exit — keep server alive
 });
 
 // ─── Startup checks ───────────────────────────────────────────────────────────
@@ -46,55 +47,26 @@ log.section('🐱  Cat Cafe Backend Starting');
 log.info(`PORT            = ${PORT}`);
 log.info(`GOOGLE_SHEET_ID = ${GOOGLE_SHEET_ID ? `${GOOGLE_SHEET_ID.slice(0,8)}…` : c.red + 'NOT SET' + c.reset}`);
 const credPath = path.join(__dirname, 'credentials.json');
-if (fs.existsSync(credPath)) {
-  log.ok('credentials.json found');
-} else {
-  log.error('credentials.json NOT found — Google Sheets will fail');
-}
 
 // Initialize Google Sheets API
 let googleCredentials = null;
-
 if (process.env.GOOGLE_CREDENTIALS) {
     try {
         googleCredentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
-        
-        // Aggressive private key sanitization
         if (googleCredentials.private_key) {
-            const originalLength = googleCredentials.private_key.length;
-            
-            // 1. Convert literal \r\n and \n to real newlines
-            // 2. Convert escaped \\n to real newlines
-            // 3. Remove any stray quotes that might have been pasted
             googleCredentials.private_key = googleCredentials.private_key
                 .replace(/\\n/g, '\n')
                 .replace(/\r\n/g, '\n')
-                .replace(/^["']|["']$/g, '') // Remove wrapping quotes if any
+                .replace(/^["']|["']$/g, '')
                 .trim();
-            
-            const pk = googleCredentials.private_key;
-            log.info('Google Auth Deep Diagnostics:');
-            log.info(`- Key starts with BEGIN: ${pk.startsWith('-----BEGIN PRIVATE KEY-----')}`);
-            log.info(`- Key ends with END:     ${pk.endsWith('-----END PRIVATE KEY-----')}`);
-            log.info(`- Contains real newlines: ${pk.includes('\n')}`);
-            log.info(`- Key length:            ${pk.length} (Original: ${originalLength})`);
-            log.info(`- Email:                 ${googleCredentials.client_email}`);
-            log.info(`- Project ID:            ${googleCredentials.project_id}`);
-            log.info(`- Key ID present:        ${!!googleCredentials.private_key_id}`);
-            
-            // Check for common mangling: double-escaped newlines
-            if (pk.includes('\\n')) {
-                log.error('WARNING: Private key still contains literal "\\n" strings!');
-            }
         }
-        
-        log.ok('Using credentials from GOOGLE_CREDENTIALS environment variable');
+        log.ok('Using credentials from GOOGLE_CREDENTIALS env var');
     } catch (e) {
-        log.error(`Failed to parse GOOGLE_CREDENTIALS environment variable: ${e.message}`);
+        log.error(`Failed to parse GOOGLE_CREDENTIALS: ${e.message}`);
     }
 } else if (fs.existsSync(credPath)) {
     googleCredentials = require(credPath);
-    log.ok('Using credentials from credentials.json file');
+    log.ok('Using credentials from credentials.json');
 }
 
 const auth = new google.auth.GoogleAuth({
@@ -103,26 +75,55 @@ const auth = new google.auth.GoogleAuth({
 });
 const sheets = google.sheets({ version: 'v4', auth });
 
-// ─── Middleware ───────────────────────────────────────────────────────────────
-app.use(cors());
+// ─── Middleware & Security ───────────────────────────────────────────────────
+app.use(helmet()); 
+app.use(cors({
+    origin: ALLOWED_ORIGIN === '*' ? '*' : ALLOWED_ORIGIN.split(','),
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
-// Compact request log: METHOD /path STATUS ms
+
+// Rate Limiting
+const generalLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+    message: { error: 'Too many requests, please try again later.' }
+});
+const submitLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000,
+    max: 10,
+    message: { error: 'Submission limit reached. Please try again later.' }
+});
+app.use('/api/', generalLimiter);
+
 app.use(morgan(`${c.grey}:method :url${c.reset} → :status  ${c.grey}:response-time ms${c.reset}`));
+
+// Validation Helper
+const validateSubmission = (req, res, next) => {
+    const { fullName, email, ratings } = req.body;
+    if (!fullName || fullName.trim().length < 2) {
+        return res.status(400).json({ error: 'Valid Full Name is required' });
+    }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return res.status(400).json({ error: 'Invalid email format' });
+    }
+    if (!ratings || typeof ratings !== 'object') {
+        return res.status(400).json({ error: 'Rating data is required' });
+    }
+    next();
+};
 
 // ─── Logger for failed submissions ────────────────────────────────────────────
 const logFailedSubmission = (data, error) => {
     const logPath = path.join(__dirname, 'failed_submissions.log');
-    const logEntry = {
-        timestamp: new Date().toISOString(),
-        data,
-        error: error.message
-    };
+    const logEntry = { timestamp: new Date().toISOString(), data, error: error.message };
     fs.appendFileSync(logPath, JSON.stringify(logEntry) + '\n');
-    log.warn(`Submission saved locally (Sheets failed): ${logPath}`);
+    log.warn(`Submission saved locally: ${logPath}`);
 };
 
 // ─── POST /api/submit ─────────────────────────────────────────────────────────
-app.post('/api/submit', async (req, res) => {
+app.post('/api/submit', submitLimiter, validateSubmission, async (req, res) => {
     log.section('📥  New Feedback Submission');
     const rawData = req.body;
 
@@ -147,21 +148,9 @@ app.post('/api/submit', async (req, res) => {
         timestamp: new Date().toLocaleString()
     };
 
-    log.info(`Name     : ${feedbackData.fullName || '(none)'}`);
-    log.info(`Email    : ${feedbackData.email || '(none)'}`);
-    log.info(`Source   : ${feedbackData.source || '(none)'}`);
-    log.info(`Ratings  : service=${feedbackData.service} food=${feedbackData.foodQuality} atm=${feedbackData.atmosphere}`);
-    log.info(`Interests: ${feedbackData.interests || '(none)'}`);
-
-    if (!feedbackData.fullName) {
-        log.warn('Rejected: fullName is missing');
-        return res.status(400).json({ error: 'Full Name is required' });
-    }
-
     try {
-        if (!GOOGLE_SHEET_ID) throw new Error('GOOGLE_SHEET_ID is not configured');
-
-        log.info('Writing to Google Sheets…');
+        if (!GOOGLE_SHEET_ID) throw new Error('GOOGLE_SHEET_ID missing');
+        log.info('Writing to Sheets…');
         const values = [[
             feedbackData.fullName, feedbackData.phone, feedbackData.residence,
             feedbackData.email, feedbackData.service, feedbackData.foodQuality,
@@ -170,86 +159,65 @@ app.post('/api/submit', async (req, res) => {
             feedbackData.interests, feedbackData.visitedBefore, feedbackData.visitFrequency,
             feedbackData.source, feedbackData.otherSource, feedbackData.timestamp
         ]];
-
         await sheets.spreadsheets.values.append({
             spreadsheetId: GOOGLE_SHEET_ID,
             range: 'Sheet1!A:R',
             valueInputOption: 'USER_ENTERED',
             requestBody: { values }
         });
-
-        log.ok(`Submission written to Google Sheets ✓  (${feedbackData.fullName})`);
-        res.status(200).json({ message: 'Feedback submitted successfully to Google Sheets' });
-
+        log.ok(`Success: ${feedbackData.fullName}`);
+        res.status(200).json({ message: 'Success' });
     } catch (error) {
-        log.error(`Google Sheets write failed: ${error.message}`);
+        log.error(`Sheets failed: ${error.message}`);
         logFailedSubmission(feedbackData, error);
-        res.status(502).json({
-            error: 'Feedback captured locally but failed to sync with Google Sheets. We will retry later.',
-            details: error.message
-        });
+        res.status(502).json({ error: 'Saved locally, sync failed.' });
     }
 });
+
+// ─── Simple In-Memory Cache ──────────────────────────────────────────────────
+let insightsCache = null;
+let lastCacheTime = 0;
+const CACHE_DURATION = 60 * 1000; // 60 seconds
 
 // ─── GET /api/insights ────────────────────────────────────────────────────────
 app.get('/api/insights', async (req, res) => {
     log.section('📊  Insights Request');
+    
+    // Check Cache
+    const now = Date.now();
+    if (insightsCache && (now - lastCacheTime < CACHE_DURATION)) {
+        log.ok('Serving from Cache (60s)');
+        return res.json(insightsCache);
+    }
+
     const logPath = path.join(__dirname, 'failed_submissions.log');
     let localFailures = 0;
-
     if (fs.existsSync(logPath)) {
         const content = fs.readFileSync(logPath, 'utf8');
         localFailures = content.trim().split('\n').filter(l => l).length;
-        if (localFailures > 0) log.warn(`${localFailures} unsynced local submission(s) found`);
     }
 
     try {
-        if (!GOOGLE_SHEET_ID) throw new Error('GOOGLE_SHEET_ID not configured');
-
-        log.info('Fetching data from Google Sheets…');
+        if (!GOOGLE_SHEET_ID) throw new Error('GOOGLE_SHEET_ID missing');
+        log.info('Fetching from Sheets…');
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId: GOOGLE_SHEET_ID,
             range: 'Sheet1!A:R',
         });
-
         const rows = response.data.values;
         let excelData = [];
-
         const toCamelCase = (str) => {
             if (!str) return '';
-            // If it's already one word and has internal uppercase (like fullName), keep it
             if (!/[^a-zA-Z0-9]/.test(str) && /[a-z]/.test(str) && /[A-Z]/.test(str)) return str;
-            
-            return str.toLowerCase()
-                .replace(/[^a-zA-Z0-9]+(.)/g, (m, chr) => chr.toUpperCase())
-                .trim();
+            return str.toLowerCase().replace(/[^a-zA-Z0-9]+(.)/g, (m, chr) => chr.toUpperCase()).trim();
         };
 
         if (rows && rows.length > 0) {
             const firstRow = rows[0];
-            let rawHeaders = [];
-            let dataRows = [];
-
-            // Detect if first row is headers or data
-            if (firstRow[0] && (firstRow[0].toLowerCase().includes('name') || firstRow[0].toLowerCase().includes('full'))) {
-                rawHeaders = firstRow;
-                dataRows = rows.slice(1);
-                log.info('Headers detected in Google Sheets');
-            } else {
-                // No headers found, use default header sequence
-                rawHeaders = [
-                    'Full Name', 'Phone', 'Residence', 'Email', 
-                    'Service', 'Food Quality', 'Beverage Quality', 'Atmosphere', 
-                    'Value for Money', 'Cleanliness', 'Staff Friendliness', 'Experience', 
-                    'Interests', 'Visited Before', 'Visit Frequency', 'Source', 
-                    'Other Source', 'Timestamp'
-                ];
-                dataRows = rows;
-                log.warn('No headers detected in Google Sheets — using default mapping');
-            }
-
+            const hasHeaders = firstRow[0] && (firstRow[0].toLowerCase().includes('name') || firstRow[0].toLowerCase().includes('full'));
+            const rawHeaders = hasHeaders ? firstRow : ['Full Name', 'Phone', 'Residence', 'Email', 'Service', 'Food Quality', 'Beverage Quality', 'Atmosphere', 'Value for Money', 'Cleanliness', 'Staff Friendliness', 'Experience', 'Interests', 'Visited Before', 'Visit Frequency', 'Source', 'Other Source', 'Timestamp'];
+            const dataRows = hasHeaders ? rows.slice(1) : rows;
             const headers = rawHeaders.map(h => h ? toCamelCase(h) : `col${Math.random().toString(36).substr(2, 5)}`);
-            
             excelData = dataRows.map(row => {
                 const rowObj = {};
                 headers.forEach((header, index) => { rowObj[header] = row[index] || ''; });
@@ -258,88 +226,48 @@ app.get('/api/insights', async (req, res) => {
         }
 
         const total = excelData.length;
-        log.ok(`Fetched ${total} rows from Google Sheets`);
-
-        // Average Rating (service field only — kept for backward compat)
-        const avgRating = total > 0
-            ? (excelData.reduce((acc, curr) => acc + (parseFloat(curr.service) || 0), 0) / total).toFixed(1)
-            : 0;
-        log.data(`Average rating (service): ${avgRating}`);
-
-        // Real Satisfaction Score: % whose 7-category average >= 4.0
+        const avgRating = total > 0 ? (excelData.reduce((acc, curr) => acc + (parseFloat(curr.service) || 0), 0) / total).toFixed(1) : 0;
         const SCORE_KEYS = ['service', 'foodQuality', 'beverageQuality', 'atmosphere', 'valueForMoney', 'cleanliness', 'staffFriendliness'];
         const satisfiedCount = excelData.filter(row => {
             const scores = SCORE_KEYS.map(k => parseFloat(row[k])).filter(s => !isNaN(s));
-            if (scores.length === 0) return false;
-            return (scores.reduce((a, b) => a + b, 0) / scores.length) >= 4.0;
+            return scores.length > 0 && (scores.reduce((a, b) => a + b, 0) / scores.length) >= 4.0;
         }).length;
         const satisfactionScore = total > 0 ? Math.round((satisfiedCount / total) * 100) : 0;
-        log.data(`Satisfaction: ${satisfiedCount}/${total} rated avg>=4.0 → ${satisfactionScore}%`);
-
-        // Top Comments calculation
         const feedbackWithAvg = excelData.map(row => {
             const scores = SCORE_KEYS.map(k => parseFloat(row[k])).filter(s => !isNaN(s));
-            const avg = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
-            return { ...row, avgRating: avg };
+            return { ...row, avgRating: scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0 };
         });
-
-        // Filter for comments that actually have text and sort
         const commentedFeedback = feedbackWithAvg.filter(fb => fb.experience && fb.experience.length > 10);
-        
-        const best = [...commentedFeedback]
-            .sort((a, b) => b.avgRating - a.avgRating)
-            .slice(0, 3);
-            
-        const worst = [...commentedFeedback]
-            .filter(fb => fb.avgRating < 3.0) // Only show actually negative/mediocre reviews in improvement
-            .sort((a, b) => a.avgRating - b.avgRating)
-            .slice(0, 3);
-
-        log.data(`Top Comments: commentedCount=${commentedFeedback.length}, best=${best.length}, worst=${worst.length}`);
-
-        // Returning Visitors Rate
+        const best = [...commentedFeedback].sort((a, b) => b.avgRating - a.avgRating).slice(0, 3);
+        const worst = [...commentedFeedback].filter(fb => fb.avgRating < 3.0).sort((a, b) => a.avgRating - b.avgRating).slice(0, 3);
         const returningCount = excelData.filter(row => row.visitedBefore?.toLowerCase().includes('yes')).length;
         const returningRate = total > 0 ? Math.round((returningCount / total) * 100) : 0;
-        log.data(`Returning visitors: ${returningCount}/${total} → ${returningRate}%`);
 
-        log.ok(`Insights ready — sending response`);
         res.json({
-            message: 'Live Insights from Google Sheets',
-            syncStatus: {
-                localFailures,
-                googleSheetsConfigured: !!GOOGLE_SHEET_ID,
-                lastSync: new Date().toISOString()
-            },
-            stats: {
-                total,
-                avgRating: parseFloat(avgRating),
-                satisfaction: satisfactionScore,
-                returningRate
-            },
-            topComments: {
-                best,
-                worst
-            },
+            message: 'Live Insights',
+            syncStatus: { localFailures, googleSheetsConfigured: true, lastSync: new Date().toISOString() },
+            stats: { total, avgRating: parseFloat(avgRating), satisfaction: satisfactionScore, returningRate },
+            topComments: { best, worst },
             allFeedback: [...excelData].reverse()
         });
 
+        // Update Cache
+        insightsCache = {
+            message: 'Live Insights (Cached)',
+            syncStatus: { localFailures, googleSheetsConfigured: true, lastSync: new Date().toISOString() },
+            stats: { total, avgRating: parseFloat(avgRating), satisfaction: satisfactionScore, returningRate },
+            topComments: { best, worst },
+            allFeedback: [...excelData].reverse()
+        };
+        lastCacheTime = Date.now();
+
     } catch (error) {
-        log.error(`Insights fetch failed: ${error.message}`);
-        res.json({
-            message: 'Insights (Fallback Mode)',
-            syncStatus: {
-                localFailures,
-                googleSheetsConfigured: !!GOOGLE_SHEET_ID,
-                error: 'Google Sheets Reader failed'
-            },
-            stats: { total: localFailures > 0 ? 'Sync Required' : 0, avgRating: 0, satisfaction: 0, returningRate: 0 }
-        });
+        log.error(`Fetch failed: ${error.message}`);
+        res.json({ message: 'Fallback Mode', stats: { total: 0, avgRating: 0, satisfaction: 0, returningRate: 0 } });
     }
 });
 
-// ─── Start ────────────────────────────────────────────────────────────────────
 app.listen(PORT, () => {
     log.section('✅  Server Ready');
     log.ok(`Listening on http://localhost:${PORT}`);
-    log.info('Waiting for requests…\n');
 });
