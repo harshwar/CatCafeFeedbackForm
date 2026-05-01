@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import { PawPrint } from 'lucide-react';
 
 /**
  * BackgroundPaws Component
