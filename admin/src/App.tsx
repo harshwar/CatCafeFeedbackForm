@@ -100,13 +100,12 @@ function App() {
   const unreadCount = newSubmissions + needsAttention;
 
   return (
-    <div className="min-h-screen text-[#1d1b19] font-sans antialiased relative overflow-hidden">
+    <div className="min-h-screen text-[#1d1b19] font-sans antialiased relative">
       <BackgroundPaws />
-      {/* TopAppBar — always visible */}
-      <header className="sticky top-0 z-40 flex justify-between items-center w-full px-6 py-3 bg-white/80 backdrop-blur-md border-b border-orange-100 shadow-sm">
+      {/* TopAppBar — fixed to top */}
+      <header className="fixed top-0 left-0 right-0 z-50 flex justify-between items-center w-full px-6 py-3 bg-white/80 backdrop-blur-md border-b border-orange-100 shadow-sm">
         <div className="flex items-center gap-8">
           <h1 className="text-xl font-bold text-orange-600 tracking-tight">Cat Cafe Feedback Report</h1>
-
         </div>
 
         <div className="flex items-center gap-3">
@@ -153,7 +152,8 @@ function App() {
         </div>
       </header>
 
-      <div className="flex min-h-[calc(100vh-64px)]">
+      <div className="flex min-h-screen pt-[64px]">
+
         {/* Sidebar — always visible */}
         <Sidebar currentView={currentView} onNavigate={setCurrentView} />
 
