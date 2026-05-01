@@ -29,7 +29,6 @@ export const Reports: React.FC<Props> = ({ feedbacks }) => {
     setIsExporting(true);
     
     try {
-      // 1. Create a "Sanitized Clone" of the report element
       const originalElement = reportRef.current;
       const canvas = await html2canvas(originalElement, {
         scale: 2,
@@ -37,59 +36,28 @@ export const Reports: React.FC<Props> = ({ feedbacks }) => {
         backgroundColor: '#ffffff',
         logging: false,
         onclone: (clonedDoc) => {
-          // A. STERN FIX: Kill ALL existing styles and external links in the clone
+          // Remove all modern styles that break html2canvas
           const styles = clonedDoc.querySelectorAll('style, link[rel="stylesheet"]');
           styles.forEach(el => el.remove());
 
-          // B. Inject a 100% compatible HEX-only stylesheet
           const compatibleStyle = clonedDoc.createElement('style');
           compatibleStyle.innerHTML = `
-            * {
-              box-sizing: border-box !important;
-              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-              color: #1c1917 !important;
-            }
-            body { background: white !important; }
-            .pdf-container { 
-              width: 1100px !important; 
-              padding: 40px !important; 
-              background: #ffffff !important;
-              display: block !important;
-            }
-            .grid { display: flex !important; flex-wrap: wrap !important; gap: 24px !important; }
-            .grid > div { flex: 1 !important; min-width: 480px !important; }
-            .bg-white { background: #ffffff !important; border: 1px solid #f5f5f4 !important; }
-            .bg-stone-50 { background: #fafaf9 !important; }
+            * { box-sizing: border-box !important; font-family: sans-serif !important; color: #1c1917 !important; }
+            .pdf-container { width: 1100px !important; padding: 40px !important; background: white !important; }
+            .grid { display: flex !important; flex-wrap: wrap !important; gap: 24px !important; margin-bottom: 24px !important; }
+            .grid-item { flex: 1 !important; min-width: 500px !important; background: white !important; border: 1px solid #f5f5f4 !important; border-radius: 24px !important; padding: 32px !important; }
             .bg-orange-50 { background: #fff7ed !important; }
-            .bg-orange-400 { background: #fb923c !important; }
-            .bg-orange-500 { background: #f97316 !important; }
-            .text-orange-500 { color: #f97316 !important; }
+            .bg-stone-50 { background: #fafaf9 !important; }
             .text-orange-600 { color: #ea580c !important; }
-            .text-stone-500 { color: #78716c !important; }
-            .rounded-\\[1\\.5rem\\] { border-radius: 24px !important; overflow: hidden !important; }
-            .p-8 { padding: 32px !important; }
-            .mb-8 { margin-bottom: 32px !important; }
-            .flex { display: flex !important; }
-            .justify-between { justify-content: space-between !important; }
-            .items-center { align-items: center !important; }
-            .chart-box { height: 350px !important; width: 100% !important; display: block !important; }
-            .summary-grid { display: grid !important; grid-template-columns: 1fr 1fr 1fr !important; gap: 16px !important; margin-top: 32px !important; }
-            .summary-card { padding: 24px !important; border-radius: 16px !important; border: 1px solid #e5e7eb !important; }
+            .chart-box { height: 350px !important; width: 100% !important; }
+            .summary-item { flex: 1 !important; padding: 24px !important; border-radius: 16px !important; border: 1px solid #e5e7eb !important; background: #fafaf9 !important; }
+            .other-section { padding: 32px !important; background: white !important; border: 1px solid #f5f5f4 !important; border-radius: 24px !important; margin-bottom: 24px !important; }
           `;
           clonedDoc.head.appendChild(compatibleStyle);
 
-          // C. Re-structure the clone for perfect PDF layout
           const reportClone = clonedDoc.querySelector('[data-report-container="true"]') as HTMLElement;
           if (reportClone) {
             reportClone.className = 'pdf-container';
-            
-            // Force dimensions on chart wrappers
-            const chartWrappers = reportClone.querySelectorAll('[data-chart-wrapper="true"]');
-            chartWrappers.forEach(w => {
-              (w as HTMLElement).style.height = '350px';
-              (w as HTMLElement).style.width = '500px';
-              (w as HTMLElement).style.display = 'block';
-            });
           }
         }
       });
@@ -123,7 +91,7 @@ export const Reports: React.FC<Props> = ({ feedbacks }) => {
 
   return (
     <div className="space-y-8">
-      {/* Header (UI Only) */}
+      {/* Header */}
       <div className="flex justify-between items-end">
         <div>
           <h2 className="text-2xl font-bold text-stone-800 flex items-center gap-2">
@@ -152,47 +120,80 @@ export const Reports: React.FC<Props> = ({ feedbacks }) => {
       <div ref={reportRef} data-report-container="true" className="space-y-8 p-4 -m-4 rounded-[2rem] bg-stone-50/50">
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
           {/* Operations Radar */}
-          <div className="bg-white p-8 rounded-[1.5rem] shadow-sm border border-orange-50">
+          <div className="bg-white p-8 rounded-[1.5rem] shadow-sm border border-orange-50 grid-item">
             <div className="mb-8">
               <h3 className="text-xl font-bold text-stone-800 flex items-center gap-2">
                 <Target size={20} className="text-orange-500" /> Operations Radar
               </h3>
-              <p className="text-stone-500 text-sm mt-1">Average scores across all service categories.</p>
+              <p className="text-stone-500 text-sm mt-1">Average scores across service categories.</p>
             </div>
-            <div data-chart-wrapper="true" className="h-[300px] w-full">
+            <div style={{ height: '350px' }} className="chart-box">
               <OperationsRadarChart data={radarData} />
             </div>
           </div>
 
           {/* Source ROI */}
-          <div className="bg-white p-8 rounded-[1.5rem] shadow-sm border border-orange-50">
+          <div className="bg-white p-8 rounded-[1.5rem] shadow-sm border border-orange-50 grid-item">
             <div className="mb-8">
               <h3 className="text-xl font-bold text-stone-800 flex items-center gap-2">
                 <TrendingUp size={20} className="text-orange-500" /> Source ROI
               </h3>
-              <p className="text-stone-500 text-sm mt-1">Average rating grouped by discovery source.</p>
+              <p className="text-stone-500 text-sm mt-1">Average rating by discovery source.</p>
             </div>
-            <div data-chart-wrapper="true" className="h-[300px] w-full">
+            <div style={{ height: '350px' }} className="chart-box">
               <StandardBarChart data={sourceROIData} dataKey="avgRating" nameKey="source" fillColor="#fb923c" yAxisDomain={[0, 5]} />
             </div>
           </div>
         </div>
 
-        {/* Summary Row */}
+        {/* Other Source Breakdown (Restored) */}
+        {otherTotal > 0 && (
+          <div className="bg-white p-8 rounded-[1.5rem] shadow-sm border border-orange-50 other-section">
+            <div className="flex justify-between items-start mb-8">
+              <div>
+                <h3 className="text-xl font-bold text-stone-800 flex items-center gap-2">
+                  <Search size={20} className="text-orange-500" /> "Other" Breakdown
+                </h3>
+                <p className="text-stone-500 text-sm mt-1">Specific discovery mentions for "Other" category.</p>
+              </div>
+              <div className="bg-orange-50 text-orange-700 font-bold text-sm px-4 py-2 rounded-xl border border-orange-100">
+                {otherTotal} responses
+              </div>
+            </div>
+            <div className="space-y-4">
+              {otherBreakdown.map((item) => (
+                <div key={item.name} className="flex items-center gap-4">
+                  <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
+                  <div className="flex-1">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="font-semibold text-stone-700 text-sm">{item.name}</span>
+                      <span className="text-sm font-bold text-stone-800">{item.pct}%</span>
+                    </div>
+                    <div className="h-2 bg-stone-100 rounded-full overflow-hidden">
+                      <div className="h-full" style={{ width: `${item.pct}%`, backgroundColor: item.color }} />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Mini Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-orange-50 border border-orange-100 p-6 rounded-2xl summary-card">
+          <div className="bg-orange-50 border border-orange-100 p-6 rounded-2xl summary-item">
             <p className="text-sm font-bold text-orange-600 uppercase tracking-wider mb-2">Top Performer</p>
             <p className="text-2xl font-bold text-stone-800">
               {radarData.length > 0 ? [...radarData].sort((a, b) => b.score - a.score)[0].category : 'N/A'}
             </p>
           </div>
-          <div className="bg-stone-50 border border-stone-200 p-6 rounded-2xl summary-card">
+          <div className="bg-stone-50 border border-stone-200 p-6 rounded-2xl summary-item">
             <p className="text-sm font-bold text-stone-500 uppercase tracking-wider mb-2">Area to Improve</p>
             <p className="text-2xl font-bold text-stone-800">
               {radarData.length > 0 ? [...radarData].sort((a, b) => a.score - b.score)[0].category : 'N/A'}
             </p>
           </div>
-          <div className="bg-stone-50 border border-stone-200 p-6 rounded-2xl summary-card">
+          <div className="bg-stone-50 border border-stone-200 p-6 rounded-2xl summary-item">
             <p className="text-sm font-bold text-stone-500 uppercase tracking-wider mb-2">Highest ROI Source</p>
             <p className="text-2xl font-bold text-stone-800">
               {sourceROIData.length > 0 ? sourceROIData[0].source : 'N/A'}
