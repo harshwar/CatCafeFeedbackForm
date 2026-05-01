@@ -58,6 +58,10 @@ let googleCredentials = null;
 if (process.env.GOOGLE_CREDENTIALS) {
     try {
         googleCredentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
+        // Ensure private key handles escaped newlines correctly from environment variables
+        if (googleCredentials.private_key) {
+            googleCredentials.private_key = googleCredentials.private_key.replace(/\\n/g, '\n');
+        }
         log.ok('Using credentials from GOOGLE_CREDENTIALS environment variable');
     } catch (e) {
         log.error('Failed to parse GOOGLE_CREDENTIALS environment variable');
