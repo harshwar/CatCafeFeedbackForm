@@ -49,7 +49,7 @@ export const Reports: React.FC<Props> = ({ feedbacks }) => {
         useCORS: true,
         backgroundColor: '#ffffff',
         logging: false,
-        onclone: (clonedDoc) => {
+        onclone: () => {
           // Additional cleanup on cloned document if needed
         }
       });
