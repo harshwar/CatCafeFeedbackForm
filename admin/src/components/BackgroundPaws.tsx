@@ -43,10 +43,5 @@ export const BackgroundPaws = () => {
         </div>
       ))}
     </div>
-
-  );
-};
-
-
   );
 };
