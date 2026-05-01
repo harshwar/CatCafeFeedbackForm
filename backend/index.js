@@ -271,13 +271,21 @@ app.get('/api/insights', async (req, res) => {
 app.get('/api/export-pdf', async (req, res) => {
     try {
         const frontendUrl = process.env.FRONTEND_URL || req.headers.referer || 'http://localhost:5173';
+        log.info(`[PDF] Export request from: ${frontendUrl}`);
+        
         const pdfBuffer = await generateReportPDF(frontendUrl);
         const timestamp = new Date().toISOString().split('T')[0];
+        
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename=Cat_Cafe_Report_${timestamp}.pdf`);
         res.send(pdfBuffer);
     } catch (error) {
-        res.status(500).json({ error: 'Failed to generate PDF report' });
+        log.error(`[PDF] Export failed: ${error.message}`);
+        res.status(500).json({ 
+            error: 'Failed to generate PDF report', 
+            details: error.message,
+            tip: 'If on Render, ensure Puppeteer/Chrome is installed in the build environment.'
+        });
     }
 });
 
