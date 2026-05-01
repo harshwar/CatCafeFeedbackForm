@@ -54,7 +54,6 @@ if (fs.existsSync(credPath)) {
 
 // Initialize Google Sheets API
 let googleCredentials = null;
-const credPath = path.join(__dirname, 'credentials.json');
 
 if (process.env.GOOGLE_CREDENTIALS) {
     try {
