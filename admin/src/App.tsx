@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Sidebar } from './components/Sidebar';
+import { BackgroundPaws } from './components/BackgroundPaws';
 import { Dashboard } from './Dashboard';
 import type { InsightsData } from './types';
 import { FeedbackList } from './FeedbackList';
@@ -99,7 +100,8 @@ function App() {
   const unreadCount = newSubmissions + needsAttention;
 
   return (
-    <div className="min-h-screen bg-[#fff8f4] text-[#1d1b19] font-sans antialiased">
+    <div className="min-h-screen bg-[#fff8f4] text-[#1d1b19] font-sans antialiased relative overflow-hidden">
+      <BackgroundPaws />
       {/* TopAppBar — always visible */}
       <header className="sticky top-0 z-40 flex justify-between items-center w-full px-6 py-3 bg-white/80 backdrop-blur-md border-b border-orange-100 shadow-sm">
         <div className="flex items-center gap-8">
