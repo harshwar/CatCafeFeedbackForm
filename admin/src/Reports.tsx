@@ -28,11 +28,30 @@ export const Reports: React.FC<Props> = ({ feedbacks }) => {
     if (!reportRef.current) return;
     setIsExporting(true);
     
+    // Add temporary style to avoid oklch/oklab parsing issues in html2canvas
+    const style = document.createElement('style');
+    style.innerHTML = `
+      .pdf-export-mode * {
+        color-scheme: light !important;
+      }
+      .pdf-export-mode .bg-stone-50 { background-color: #fafaf9 !important; }
+      .pdf-export-mode .bg-orange-50 { background-color: #fff7ed !important; }
+      .pdf-export-mode .text-stone-500 { color: #78716c !important; }
+      .pdf-export-mode .text-orange-500 { color: #f97316 !important; }
+      .pdf-export-mode .border-orange-50 { border-color: #fff7ed !important; }
+    `;
+    document.head.appendChild(style);
+    reportRef.current.classList.add('pdf-export-mode');
+
     try {
       const canvas = await html2canvas(reportRef.current, {
         scale: 2,
         useCORS: true,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        logging: false,
+        onclone: (clonedDoc) => {
+          // Additional cleanup on cloned document if needed
+        }
       });
       
       const imgData = canvas.toDataURL('image/png');
@@ -47,6 +66,8 @@ export const Reports: React.FC<Props> = ({ feedbacks }) => {
     } catch (error) {
       console.error('PDF Export failed:', error);
     } finally {
+      reportRef.current.classList.remove('pdf-export-mode');
+      document.head.removeChild(style);
       setIsExporting(false);
     }
   };
