@@ -58,13 +58,26 @@ let googleCredentials = null;
 if (process.env.GOOGLE_CREDENTIALS) {
     try {
         googleCredentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
-        // Ensure private key handles escaped newlines correctly from environment variables
+        
+        // Robust private key sanitization
         if (googleCredentials.private_key) {
-            googleCredentials.private_key = googleCredentials.private_key.replace(/\\n/g, '\n');
+            const originalLength = googleCredentials.private_key.length;
+            googleCredentials.private_key = googleCredentials.private_key
+                .replace(/\\n/g, '\n') // Fix literal \n
+                .trim();
+            
+            const pk = googleCredentials.private_key;
+            log.info('Google Auth Diagnostics:');
+            log.info(`- Key starts with BEGIN: ${pk.startsWith('-----BEGIN PRIVATE KEY-----')}`);
+            log.info(`- Key ends with END:     ${pk.endsWith('-----END PRIVATE KEY-----')}`);
+            log.info(`- Contains real newlines: ${pk.includes('\n')}`);
+            log.info(`- Key length:            ${pk.length} (was ${originalLength})`);
+            log.info(`- Client Email:          ${googleCredentials.client_email}`);
         }
+        
         log.ok('Using credentials from GOOGLE_CREDENTIALS environment variable');
     } catch (e) {
-        log.error('Failed to parse GOOGLE_CREDENTIALS environment variable');
+        log.error(`Failed to parse GOOGLE_CREDENTIALS environment variable: ${e.message}`);
     }
 } else if (fs.existsSync(credPath)) {
     googleCredentials = require(credPath);
