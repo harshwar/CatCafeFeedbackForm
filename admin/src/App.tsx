@@ -10,6 +10,7 @@ import { NotificationPanel } from './components/NotificationPanel';
 import { Bell, AlertTriangle, RefreshCw } from 'lucide-react';
 import { DashboardSkeleton } from './components/SkeletonLoader';
 import { MobileNav } from './components/MobileNav';
+import { PrintView } from './PrintView';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 const POLL_INTERVAL_MS = 30_000; // auto-refresh every 30 seconds
@@ -33,6 +34,14 @@ function useTimeAgo(date: Date | null): string {
 
 function App() {
   const [currentView, setCurrentView] = useState('dashboard');
+  const [isPrintMode, setIsPrintMode] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('view') === 'print') {
+      setIsPrintMode(true);
+    }
+  }, []);
   const [insights, setInsights] = useState<InsightsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -107,6 +116,10 @@ function App() {
   }, [feedbacks, lastVisit]);
 
   const unreadCount = newSubmissions + needsAttention;
+
+  if (isPrintMode) {
+    return <PrintView insights={insights} />;
+  }
 
   return (
     <div className="min-h-screen text-[#1d1b19] font-sans antialiased relative">

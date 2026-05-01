@@ -7,6 +7,7 @@ const { google } = require('googleapis');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 require('dotenv').config();
+const { generateReportPDF } = require('./exportPdf');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -264,6 +265,19 @@ app.get('/api/insights', async (req, res) => {
     } catch (error) {
         log.error(`Fetch failed: ${error.message}`);
         res.json({ message: 'Fallback Mode', stats: { total: 0, avgRating: 0, satisfaction: 0, returningRate: 0 } });
+    }
+});
+
+app.get('/api/export-pdf', async (req, res) => {
+    try {
+        const frontendUrl = process.env.FRONTEND_URL || req.headers.referer || 'http://localhost:5173';
+        const pdfBuffer = await generateReportPDF(frontendUrl);
+        const timestamp = new Date().toISOString().split('T')[0];
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=Cat_Cafe_Report_${timestamp}.pdf`);
+        res.send(pdfBuffer);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to generate PDF report' });
     }
 });
 

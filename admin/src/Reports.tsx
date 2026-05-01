@@ -1,6 +1,4 @@
 import React, { useMemo, useRef, useState } from 'react';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
 import type { FeedbackEntry } from './types';
 import { getRadarData, getSourceROI, getOtherSourceBreakdown } from './utils/analytics';
 import { exportToCSV } from './utils/export';
@@ -11,6 +9,8 @@ import { BarChart3, Download, Target, TrendingUp, Search, Loader2 } from 'lucide
 interface Props {
   feedbacks: FeedbackEntry[];
 }
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 export const Reports: React.FC<Props> = ({ feedbacks }) => {
   const reportRef = useRef<HTMLDivElement>(null);
@@ -25,54 +25,23 @@ export const Reports: React.FC<Props> = ({ feedbacks }) => {
   };
 
   const handleExportPDF = async () => {
-    if (!reportRef.current) return;
     setIsExporting(true);
-    
     try {
-      const originalElement = reportRef.current;
-      const canvas = await html2canvas(originalElement, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        logging: false,
-        onclone: (clonedDoc) => {
-          // Remove all modern styles that break html2canvas
-          const styles = clonedDoc.querySelectorAll('style, link[rel="stylesheet"]');
-          styles.forEach(el => el.remove());
-
-          const compatibleStyle = clonedDoc.createElement('style');
-          compatibleStyle.innerHTML = `
-            * { box-sizing: border-box !important; font-family: sans-serif !important; color: #1c1917 !important; }
-            .pdf-container { width: 1100px !important; padding: 40px !important; background: white !important; }
-            .grid { display: flex !important; flex-wrap: wrap !important; gap: 24px !important; margin-bottom: 24px !important; }
-            .grid-item { flex: 1 !important; min-width: 500px !important; background: white !important; border: 1px solid #f5f5f4 !important; border-radius: 24px !important; padding: 32px !important; }
-            .bg-orange-50 { background: #fff7ed !important; }
-            .bg-stone-50 { background: #fafaf9 !important; }
-            .text-orange-600 { color: #ea580c !important; }
-            .chart-box { height: 350px !important; width: 100% !important; }
-            .summary-item { flex: 1 !important; padding: 24px !important; border-radius: 16px !important; border: 1px solid #e5e7eb !important; background: #fafaf9 !important; }
-            .other-section { padding: 32px !important; background: white !important; border: 1px solid #f5f5f4 !important; border-radius: 24px !important; margin-bottom: 24px !important; }
-          `;
-          clonedDoc.head.appendChild(compatibleStyle);
-
-          const reportClone = clonedDoc.querySelector('[data-report-container="true"]') as HTMLElement;
-          if (reportClone) {
-            reportClone.className = 'pdf-container';
-          }
-        }
-      });
+      const response = await fetch(`${API_URL}/api/export-pdf`);
+      if (!response.ok) throw new Error('PDF Export failed');
       
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'px',
-        format: [canvas.width, canvas.height]
-      });
-      
-      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-      pdf.save(`Cat_Cafe_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Cat_Cafe_Operational_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
     } catch (error) {
-      console.error('PDF Export failed:', error);
+      console.error('Backend PDF Export failed:', error);
+      alert('Could not generate PDF. Please check if the backend is running.');
     } finally {
       setIsExporting(false);
     }
@@ -127,7 +96,7 @@ export const Reports: React.FC<Props> = ({ feedbacks }) => {
               </h3>
               <p className="text-stone-500 text-sm mt-1">Average scores across service categories.</p>
             </div>
-            <div style={{ height: '350px' }} className="chart-box">
+            <div data-chart-wrapper="true" style={{ height: '350px' }} className="chart-box">
               <OperationsRadarChart data={radarData} />
             </div>
           </div>
@@ -140,13 +109,13 @@ export const Reports: React.FC<Props> = ({ feedbacks }) => {
               </h3>
               <p className="text-stone-500 text-sm mt-1">Average rating by discovery source.</p>
             </div>
-            <div style={{ height: '350px' }} className="chart-box">
+            <div data-chart-wrapper="true" style={{ height: '350px' }} className="chart-box">
               <StandardBarChart data={sourceROIData} dataKey="avgRating" nameKey="source" fillColor="#fb923c" yAxisDomain={[0, 5]} />
             </div>
           </div>
         </div>
 
-        {/* Other Source Breakdown (Restored) */}
+        {/* Other Source Breakdown */}
         {otherTotal > 0 && (
           <div className="bg-white p-8 rounded-[1.5rem] shadow-sm border border-orange-50 other-section">
             <div className="flex justify-between items-start mb-8">
