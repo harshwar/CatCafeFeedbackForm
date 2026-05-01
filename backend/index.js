@@ -59,20 +59,33 @@ if (process.env.GOOGLE_CREDENTIALS) {
     try {
         googleCredentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
         
-        // Robust private key sanitization
+        // Aggressive private key sanitization
         if (googleCredentials.private_key) {
             const originalLength = googleCredentials.private_key.length;
+            
+            // 1. Convert literal \r\n and \n to real newlines
+            // 2. Convert escaped \\n to real newlines
+            // 3. Remove any stray quotes that might have been pasted
             googleCredentials.private_key = googleCredentials.private_key
-                .replace(/\\n/g, '\n') // Fix literal \n
+                .replace(/\\n/g, '\n')
+                .replace(/\r\n/g, '\n')
+                .replace(/^["']|["']$/g, '') // Remove wrapping quotes if any
                 .trim();
             
             const pk = googleCredentials.private_key;
-            log.info('Google Auth Diagnostics:');
+            log.info('Google Auth Deep Diagnostics:');
             log.info(`- Key starts with BEGIN: ${pk.startsWith('-----BEGIN PRIVATE KEY-----')}`);
             log.info(`- Key ends with END:     ${pk.endsWith('-----END PRIVATE KEY-----')}`);
             log.info(`- Contains real newlines: ${pk.includes('\n')}`);
-            log.info(`- Key length:            ${pk.length} (was ${originalLength})`);
-            log.info(`- Client Email:          ${googleCredentials.client_email}`);
+            log.info(`- Key length:            ${pk.length} (Original: ${originalLength})`);
+            log.info(`- Email:                 ${googleCredentials.client_email}`);
+            log.info(`- Project ID:            ${googleCredentials.project_id}`);
+            log.info(`- Key ID present:        ${!!googleCredentials.private_key_id}`);
+            
+            // Check for common mangling: double-escaped newlines
+            if (pk.includes('\\n')) {
+                log.error('WARNING: Private key still contains literal "\\n" strings!');
+            }
         }
         
         log.ok('Using credentials from GOOGLE_CREDENTIALS environment variable');
