@@ -29,65 +29,68 @@ export const Reports: React.FC<Props> = ({ feedbacks }) => {
     setIsExporting(true);
     
     try {
-      // Use onclone to sanitize the cloned document before rendering
-      const canvas = await html2canvas(reportRef.current, {
+      // 1. Create a "Sanitized Clone" of the report element
+      const originalElement = reportRef.current;
+      const canvas = await html2canvas(originalElement, {
         scale: 2,
         useCORS: true,
         backgroundColor: '#ffffff',
         logging: false,
         onclone: (clonedDoc) => {
-          // 1. Force a fixed width for the report container to ensure Recharts has space to render
-          const reportElement = clonedDoc.querySelector('[data-report-container="true"]') as HTMLElement;
-          if (reportElement) {
-            reportElement.style.width = '1200px';
-            reportElement.style.padding = '40px';
-          }
+          // A. STERN FIX: Kill ALL existing styles and external links in the clone
+          const styles = clonedDoc.querySelectorAll('style, link[rel="stylesheet"]');
+          styles.forEach(el => el.remove());
 
-          // 2. STERN FIX: Remove all <style> tags that might contain oklab/oklch
-          // And inject a simple, compatible stylesheet for the PDF
-          const styles = clonedDoc.getElementsByTagName('style');
-          for (let i = styles.length - 1; i >= 0; i--) {
-            styles[i].remove();
-          }
-
+          // B. Inject a 100% compatible HEX-only stylesheet
           const compatibleStyle = clonedDoc.createElement('style');
           compatibleStyle.innerHTML = `
             * {
-              box-sizing: border-box;
-              font-family: sans-serif !important;
-              color: #1d1b19 !important;
+              box-sizing: border-box !important;
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+              color: #1c1917 !important;
             }
-            .bg-white { background-color: #ffffff !important; }
-            .bg-stone-50 { background-color: #fafaf9 !important; }
-            .bg-orange-50 { background-color: #fff7ed !important; }
-            .bg-orange-400 { background-color: #fb923c !important; }
-            .bg-orange-500 { background-color: #f97316 !important; }
-            .bg-green-50\\/50 { background-color: #f0fdf4 !important; }
-            .bg-red-50\\/50 { background-color: #fef2f2 !important; }
+            body { background: white !important; }
+            .pdf-container { 
+              width: 1100px !important; 
+              padding: 40px !important; 
+              background: #ffffff !important;
+              display: block !important;
+            }
+            .grid { display: flex !important; flex-wrap: wrap !important; gap: 24px !important; }
+            .grid > div { flex: 1 !important; min-width: 480px !important; }
+            .bg-white { background: #ffffff !important; border: 1px solid #f5f5f4 !important; }
+            .bg-stone-50 { background: #fafaf9 !important; }
+            .bg-orange-50 { background: #fff7ed !important; }
+            .bg-orange-400 { background: #fb923c !important; }
+            .bg-orange-500 { background: #f97316 !important; }
             .text-orange-500 { color: #f97316 !important; }
             .text-orange-600 { color: #ea580c !important; }
             .text-stone-500 { color: #78716c !important; }
-            .text-stone-800 { color: #1c1917 !important; }
-            .border-orange-50 { border-color: #fff7ed !important; }
-            .border-orange-100 { border-color: #ffedd5 !important; }
-            .border-stone-100 { border-color: #f5f5f4 !important; }
-            .rounded-\\[1\\.5rem\\] { border-radius: 1.5rem !important; }
-            .rounded-2xl { border-radius: 1rem !important; }
-            .shadow-sm { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important; }
-            .grid { display: grid !important; }
-            .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)) !important; }
-            .md\\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
-            .xl\\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
-            .gap-8 { gap: 2rem !important; }
-            .gap-6 { gap: 1.5rem !important; }
-            .space-y-8 > * + * { margin-top: 2rem !important; }
+            .rounded-\\[1\\.5rem\\] { border-radius: 24px !important; overflow: hidden !important; }
+            .p-8 { padding: 32px !important; }
+            .mb-8 { margin-bottom: 32px !important; }
             .flex { display: flex !important; }
             .justify-between { justify-content: space-between !important; }
             .items-center { align-items: center !important; }
-            .h-3 { height: 0.75rem !important; }
-            .w-full { width: 100% !important; }
+            .chart-box { height: 350px !important; width: 100% !important; display: block !important; }
+            .summary-grid { display: grid !important; grid-template-columns: 1fr 1fr 1fr !important; gap: 16px !important; margin-top: 32px !important; }
+            .summary-card { padding: 24px !important; border-radius: 16px !important; border: 1px solid #e5e7eb !important; }
           `;
           clonedDoc.head.appendChild(compatibleStyle);
+
+          // C. Re-structure the clone for perfect PDF layout
+          const reportClone = clonedDoc.querySelector('[data-report-container="true"]') as HTMLElement;
+          if (reportClone) {
+            reportClone.className = 'pdf-container';
+            
+            // Force dimensions on chart wrappers
+            const chartWrappers = reportClone.querySelectorAll('[data-chart-wrapper="true"]');
+            chartWrappers.forEach(w => {
+              (w as HTMLElement).style.height = '350px';
+              (w as HTMLElement).style.width = '500px';
+              (w as HTMLElement).style.display = 'block';
+            });
+          }
         }
       });
       
@@ -99,7 +102,7 @@ export const Reports: React.FC<Props> = ({ feedbacks }) => {
       });
       
       pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-      pdf.save(`Cat_Cafe_Operational_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+      pdf.save(`Cat_Cafe_Report_${new Date().toISOString().split('T')[0]}.pdf`);
     } catch (error) {
       console.error('PDF Export failed:', error);
     } finally {
@@ -120,7 +123,7 @@ export const Reports: React.FC<Props> = ({ feedbacks }) => {
 
   return (
     <div className="space-y-8">
-      {/* Header (Not in PDF) */}
+      {/* Header (UI Only) */}
       <div className="flex justify-between items-end">
         <div>
           <h2 className="text-2xl font-bold text-stone-800 flex items-center gap-2">
@@ -154,9 +157,9 @@ export const Reports: React.FC<Props> = ({ feedbacks }) => {
               <h3 className="text-xl font-bold text-stone-800 flex items-center gap-2">
                 <Target size={20} className="text-orange-500" /> Operations Radar
               </h3>
-              <p className="text-stone-500 text-sm mt-1">Average scores across all core service categories.</p>
+              <p className="text-stone-500 text-sm mt-1">Average scores across all service categories.</p>
             </div>
-            <div style={{ width: '100%', height: '300px' }}>
+            <div data-chart-wrapper="true" className="h-[300px] w-full">
               <OperationsRadarChart data={radarData} />
             </div>
           </div>
@@ -169,75 +172,27 @@ export const Reports: React.FC<Props> = ({ feedbacks }) => {
               </h3>
               <p className="text-stone-500 text-sm mt-1">Average rating grouped by discovery source.</p>
             </div>
-            <div style={{ width: '100%', height: '300px' }}>
+            <div data-chart-wrapper="true" className="h-[300px] w-full">
               <StandardBarChart data={sourceROIData} dataKey="avgRating" nameKey="source" fillColor="#fb923c" yAxisDomain={[0, 5]} />
             </div>
           </div>
         </div>
 
-        {/* "Other" Source Deep-Dive */}
-        {otherTotal > 0 && (
-          <div className="bg-white p-8 rounded-[1.5rem] shadow-sm border border-orange-50">
-            <div className="flex justify-between items-start mb-8">
-              <div>
-                <h3 className="text-xl font-bold text-stone-800 flex items-center gap-2">
-                  <Search size={20} className="text-orange-500" /> "Other" Source Breakdown
-                </h3>
-                <p className="text-stone-500 text-sm mt-1">
-                  Deep-dive into what customers wrote when they selected "Other" as their discovery source.{' '}
-                  <span className="font-semibold text-stone-700">{otherTotal} total entries</span> in this group.
-                </p>
-              </div>
-              <div className="bg-orange-50 text-orange-700 font-bold text-sm px-4 py-2 rounded-xl border border-orange-100">
-                {otherTotal} responses
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              {otherBreakdown.map((item) => (
-                <div key={item.name} className="flex items-center gap-4 group">
-                  <div
-                    className="w-3 h-3 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: item.color }}
-                  />
-                  <div className="flex-1">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="font-semibold text-stone-700 text-sm">
-                        {item.name}
-                      </span>
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs text-stone-400 font-medium">{item.count} responses</span>
-                        <span className="text-sm font-bold text-stone-800 w-10 text-right">{item.pct}%</span>
-                      </div>
-                    </div>
-                    <div className="h-2 bg-stone-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full rounded-full"
-                        style={{ width: `${item.pct}%`, backgroundColor: item.color }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Mini Summary Cards */}
+        {/* Summary Row */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-orange-50 border border-orange-100 p-6 rounded-2xl">
+          <div className="bg-orange-50 border border-orange-100 p-6 rounded-2xl summary-card">
             <p className="text-sm font-bold text-orange-600 uppercase tracking-wider mb-2">Top Performer</p>
             <p className="text-2xl font-bold text-stone-800">
               {radarData.length > 0 ? [...radarData].sort((a, b) => b.score - a.score)[0].category : 'N/A'}
             </p>
           </div>
-          <div className="bg-stone-50 border border-stone-200 p-6 rounded-2xl">
+          <div className="bg-stone-50 border border-stone-200 p-6 rounded-2xl summary-card">
             <p className="text-sm font-bold text-stone-500 uppercase tracking-wider mb-2">Area to Improve</p>
             <p className="text-2xl font-bold text-stone-800">
               {radarData.length > 0 ? [...radarData].sort((a, b) => a.score - b.score)[0].category : 'N/A'}
             </p>
           </div>
-          <div className="bg-stone-50 border border-stone-200 p-6 rounded-2xl">
+          <div className="bg-stone-50 border border-stone-200 p-6 rounded-2xl summary-card">
             <p className="text-sm font-bold text-stone-500 uppercase tracking-wider mb-2">Highest ROI Source</p>
             <p className="text-2xl font-bold text-stone-800">
               {sourceROIData.length > 0 ? sourceROIData[0].source : 'N/A'}
