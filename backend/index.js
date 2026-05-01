@@ -191,11 +191,32 @@ app.get('/api/insights', async (req, res) => {
                 .trim();
         };
 
-        if (rows && rows.length > 1) {
-            const rawHeaders = rows[0];
-            const headers = rawHeaders.map(h => toCamelCase(h));
+        if (rows && rows.length > 0) {
+            const firstRow = rows[0];
+            let rawHeaders = [];
+            let dataRows = [];
+
+            // Detect if first row is headers or data
+            if (firstRow[0] && (firstRow[0].toLowerCase().includes('name') || firstRow[0].toLowerCase().includes('full'))) {
+                rawHeaders = firstRow;
+                dataRows = rows.slice(1);
+                log.info('Headers detected in Google Sheets');
+            } else {
+                // No headers found, use default header sequence
+                rawHeaders = [
+                    'Full Name', 'Phone', 'Residence', 'Email', 
+                    'Service', 'Food Quality', 'Beverage Quality', 'Atmosphere', 
+                    'Value for Money', 'Cleanliness', 'Staff Friendliness', 'Experience', 
+                    'Interests', 'Visited Before', 'Visit Frequency', 'Source', 
+                    'Other Source', 'Timestamp'
+                ];
+                dataRows = rows;
+                log.warn('No headers detected in Google Sheets — using default mapping');
+            }
+
+            const headers = rawHeaders.map(h => h ? toCamelCase(h) : `col${Math.random().toString(36).substr(2, 5)}`);
             
-            excelData = rows.slice(1).map(row => {
+            excelData = dataRows.map(row => {
                 const rowObj = {};
                 headers.forEach((header, index) => { rowObj[header] = row[index] || ''; });
                 return rowObj;

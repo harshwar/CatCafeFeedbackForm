@@ -14,7 +14,7 @@ async function test() {
             spreadsheetId: process.env.GOOGLE_SHEET_ID,
             range: 'Sheet1!A:R',
         });
-        console.log('Success!', response.data.values);
+        console.log('Success! First 5 rows:', response.data.values.slice(0, 5));
     } catch (error) {
         console.error('Error details:', error.response ? error.response.data : error.message);
     }
