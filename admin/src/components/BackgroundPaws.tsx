@@ -16,7 +16,7 @@ export const BackgroundPaws = () => {
       duration: `${25 + Math.random() * 25}s`,
       scale: 0.8 + Math.random() * 1.5,
       rotation: Math.random() * 360,
-      opacity: 0.5 + Math.random() * 0.25 // 50% to 75% opacity
+      opacity: 1.0 // 100% opacity as requested
     }));
   }, []);
 
@@ -25,7 +25,7 @@ export const BackgroundPaws = () => {
       {paws.map((paw) => (
         <div
           key={paw.id}
-          className="absolute animate-float text-[#FFF1E7]" // Soft peach/orange
+          className="absolute animate-float text-orange-900" 
           style={{
             left: paw.left,
             top: paw.top,
@@ -36,18 +36,19 @@ export const BackgroundPaws = () => {
             '--initial-rotation': `${paw.rotation}deg`
           } as React.CSSProperties}
         >
-          <svg width="120" height="120" viewBox="0 0 24 24" fill="currentColor">
-            {/* Main large pad */}
-            <path d="M12 13.5c-2.5 0-4.5 1.5-4.5 4s2 4.5 4.5 4.5 4.5-2 4.5-4.5-2-4-4.5-4z" />
-            {/* 4 Toes arched above */}
-            <circle cx="7" cy="10" r="2.2" />
-            <circle cx="10.5" cy="7" r="2.2" />
-            <circle cx="14.5" cy="7" r="2.2" />
-            <circle cx="18" cy="10" r="2.2" />
+          <svg width="140" height="140" viewBox="0 0 24 24" fill="currentColor">
+            {/* Main large pad with the 'heart' dip at the top */}
+            <path d="M12 12.5c-2.8 0-5 2-5 5s2.2 4.5 5 4.5 5-1.5 5-4.5-2.2-5-5-5z" />
+            {/* 4 Large toes arched above */}
+            <circle cx="7" cy="9" r="2.5" />
+            <circle cx="10.5" cy="5.5" r="2.5" />
+            <circle cx="14.5" cy="5.5" r="2.5" />
+            <circle cx="18" cy="9" r="2.5" />
           </svg>
         </div>
       ))}
     </div>
+
 
   );
 };
