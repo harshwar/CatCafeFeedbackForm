@@ -186,6 +186,10 @@ app.get('/api/insights', async (req, res) => {
         let excelData = [];
 
         const toCamelCase = (str) => {
+            if (!str) return '';
+            // If it's already one word and has internal uppercase (like fullName), keep it
+            if (!/[^a-zA-Z0-9]/.test(str) && /[a-z]/.test(str) && /[A-Z]/.test(str)) return str;
+            
             return str.toLowerCase()
                 .replace(/[^a-zA-Z0-9]+(.)/g, (m, chr) => chr.toUpperCase())
                 .trim();
