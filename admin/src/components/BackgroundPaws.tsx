@@ -19,14 +19,15 @@ export const BackgroundPaws = () => {
           top: `${(r / rows) * 100 + (Math.random() * (100 / rows) * 0.6)}%`,
           delay: `${Math.random() * -30}s`,
           duration: `${40 + Math.random() * 40}s`,
-          scale: 0.7 + Math.random() * 0.8,
-          rotation: -20 + Math.random() * 40,
+          scale: 0.5 + Math.random() * 1.3, // Varied size (0.5 to 1.8)
+          rotation: Math.random() * 360, // Full 360 rotation
           opacity: 0.75
         });
       }
     }
     return items;
   }, []);
+
 
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10 select-none bg-transparent">
