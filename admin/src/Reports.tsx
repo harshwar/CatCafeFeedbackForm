@@ -28,29 +28,66 @@ export const Reports: React.FC<Props> = ({ feedbacks }) => {
     if (!reportRef.current) return;
     setIsExporting(true);
     
-    // Add temporary style to avoid oklch/oklab parsing issues in html2canvas
-    const style = document.createElement('style');
-    style.innerHTML = `
-      .pdf-export-mode * {
-        color-scheme: light !important;
-      }
-      .pdf-export-mode .bg-stone-50 { background-color: #fafaf9 !important; }
-      .pdf-export-mode .bg-orange-50 { background-color: #fff7ed !important; }
-      .pdf-export-mode .text-stone-500 { color: #78716c !important; }
-      .pdf-export-mode .text-orange-500 { color: #f97316 !important; }
-      .pdf-export-mode .border-orange-50 { border-color: #fff7ed !important; }
-    `;
-    document.head.appendChild(style);
-    reportRef.current.classList.add('pdf-export-mode');
-
     try {
+      // Use onclone to sanitize the cloned document before rendering
       const canvas = await html2canvas(reportRef.current, {
         scale: 2,
         useCORS: true,
         backgroundColor: '#ffffff',
         logging: false,
-        onclone: () => {
-          // Additional cleanup on cloned document if needed
+        onclone: (clonedDoc) => {
+          // 1. Force a fixed width for the report container to ensure Recharts has space to render
+          const reportElement = clonedDoc.querySelector('[data-report-container="true"]') as HTMLElement;
+          if (reportElement) {
+            reportElement.style.width = '1200px';
+            reportElement.style.padding = '40px';
+          }
+
+          // 2. STERN FIX: Remove all <style> tags that might contain oklab/oklch
+          // And inject a simple, compatible stylesheet for the PDF
+          const styles = clonedDoc.getElementsByTagName('style');
+          for (let i = styles.length - 1; i >= 0; i--) {
+            styles[i].remove();
+          }
+
+          const compatibleStyle = clonedDoc.createElement('style');
+          compatibleStyle.innerHTML = `
+            * {
+              box-sizing: border-box;
+              font-family: sans-serif !important;
+              color: #1d1b19 !important;
+            }
+            .bg-white { background-color: #ffffff !important; }
+            .bg-stone-50 { background-color: #fafaf9 !important; }
+            .bg-orange-50 { background-color: #fff7ed !important; }
+            .bg-orange-400 { background-color: #fb923c !important; }
+            .bg-orange-500 { background-color: #f97316 !important; }
+            .bg-green-50\\/50 { background-color: #f0fdf4 !important; }
+            .bg-red-50\\/50 { background-color: #fef2f2 !important; }
+            .text-orange-500 { color: #f97316 !important; }
+            .text-orange-600 { color: #ea580c !important; }
+            .text-stone-500 { color: #78716c !important; }
+            .text-stone-800 { color: #1c1917 !important; }
+            .border-orange-50 { border-color: #fff7ed !important; }
+            .border-orange-100 { border-color: #ffedd5 !important; }
+            .border-stone-100 { border-color: #f5f5f4 !important; }
+            .rounded-\\[1\\.5rem\\] { border-radius: 1.5rem !important; }
+            .rounded-2xl { border-radius: 1rem !important; }
+            .shadow-sm { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important; }
+            .grid { display: grid !important; }
+            .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)) !important; }
+            .md\\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+            .xl\\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+            .gap-8 { gap: 2rem !important; }
+            .gap-6 { gap: 1.5rem !important; }
+            .space-y-8 > * + * { margin-top: 2rem !important; }
+            .flex { display: flex !important; }
+            .justify-between { justify-content: space-between !important; }
+            .items-center { align-items: center !important; }
+            .h-3 { height: 0.75rem !important; }
+            .w-full { width: 100% !important; }
+          `;
+          clonedDoc.head.appendChild(compatibleStyle);
         }
       });
       
@@ -66,8 +103,6 @@ export const Reports: React.FC<Props> = ({ feedbacks }) => {
     } catch (error) {
       console.error('PDF Export failed:', error);
     } finally {
-      reportRef.current.classList.remove('pdf-export-mode');
-      document.head.removeChild(style);
       setIsExporting(false);
     }
   };
@@ -85,7 +120,7 @@ export const Reports: React.FC<Props> = ({ feedbacks }) => {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
+      {/* Header (Not in PDF) */}
       <div className="flex justify-between items-end">
         <div>
           <h2 className="text-2xl font-bold text-stone-800 flex items-center gap-2">
@@ -111,7 +146,7 @@ export const Reports: React.FC<Props> = ({ feedbacks }) => {
         </div>
       </div>
 
-      <div ref={reportRef} className="space-y-8 p-4 -m-4 rounded-[2rem] bg-stone-50/50">
+      <div ref={reportRef} data-report-container="true" className="space-y-8 p-4 -m-4 rounded-[2rem] bg-stone-50/50">
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
           {/* Operations Radar */}
           <div className="bg-white p-8 rounded-[1.5rem] shadow-sm border border-orange-50">
@@ -121,7 +156,9 @@ export const Reports: React.FC<Props> = ({ feedbacks }) => {
               </h3>
               <p className="text-stone-500 text-sm mt-1">Average scores across all core service categories.</p>
             </div>
-            <OperationsRadarChart data={radarData} />
+            <div style={{ width: '100%', height: '300px' }}>
+              <OperationsRadarChart data={radarData} />
+            </div>
           </div>
 
           {/* Source ROI */}
@@ -132,7 +169,9 @@ export const Reports: React.FC<Props> = ({ feedbacks }) => {
               </h3>
               <p className="text-stone-500 text-sm mt-1">Average rating grouped by discovery source.</p>
             </div>
-            <StandardBarChart data={sourceROIData} dataKey="avgRating" nameKey="source" fillColor="#fb923c" yAxisDomain={[0, 5]} />
+            <div style={{ width: '100%', height: '300px' }}>
+              <StandardBarChart data={sourceROIData} dataKey="avgRating" nameKey="source" fillColor="#fb923c" yAxisDomain={[0, 5]} />
+            </div>
           </div>
         </div>
 
@@ -154,39 +193,33 @@ export const Reports: React.FC<Props> = ({ feedbacks }) => {
               </div>
             </div>
 
-            {otherBreakdown.length === 0 ? (
-              <div className="text-center py-8 text-stone-400">
-                <p className="font-medium">No freetext responses were provided by these customers.</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {otherBreakdown.map((item) => (
-                  <div key={item.name} className="flex items-center gap-4 group">
-                    <div
-                      className="w-3 h-3 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: item.color }}
-                    />
-                    <div className="flex-1">
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="font-semibold text-stone-700 text-sm group-hover:text-orange-600 transition-colors">
-                          {item.name}
-                        </span>
-                        <div className="flex items-center gap-3">
-                          <span className="text-xs text-stone-400 font-medium">{item.count} {item.count === 1 ? 'response' : 'responses'}</span>
-                          <span className="text-sm font-bold text-stone-800 w-10 text-right">{item.pct}%</span>
-                        </div>
-                      </div>
-                      <div className="h-2 bg-stone-100 rounded-full overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all duration-700"
-                          style={{ width: `${item.pct}%`, backgroundColor: item.color }}
-                        />
+            <div className="space-y-4">
+              {otherBreakdown.map((item) => (
+                <div key={item.name} className="flex items-center gap-4 group">
+                  <div
+                    className="w-3 h-3 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: item.color }}
+                  />
+                  <div className="flex-1">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="font-semibold text-stone-700 text-sm">
+                        {item.name}
+                      </span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs text-stone-400 font-medium">{item.count} responses</span>
+                        <span className="text-sm font-bold text-stone-800 w-10 text-right">{item.pct}%</span>
                       </div>
                     </div>
+                    <div className="h-2 bg-stone-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full"
+                        style={{ width: `${item.pct}%`, backgroundColor: item.color }}
+                      />
+                    </div>
                   </div>
-                ))}
-              </div>
-            )}
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
