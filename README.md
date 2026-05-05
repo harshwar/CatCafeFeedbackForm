@@ -1,71 +1,59 @@
-# 🐾 Cat Cafe Insights: Full-Stack Feedback Ecosystem
+# 🐾 Cat Cafe Insights: Full-Stack Modernization
 
-A professional, end-to-end feedback collection and analysis system designed for a Cat Cafe. This project demonstrates high-fidelity UI/UX, robust backend security, and real-time data orchestration using Google Sheets as a serverless database.
-
-![Project Preview](admin/public/screen.png) <!-- Placeholder for screenshot -->
+A professional, production-ready feedback collection and analysis system. This project features a high-performance **Google Apps Script (GAS)** backend and a state-of-the-art **Bento Grid** admin dashboard.
 
 ## 🌟 Key Features
 
-### 📊 Admin Dashboard
-- **Real-Time Analytics**: Live insights fetched from Google Sheets with in-memory caching.
-- **Dynamic Visualizations**: Interactive charts for feedback volume, discovery sources, and performance metrics.
-- **Sentiment Monitoring**: Automated tracking of top praises and critical areas needing improvement.
-- **Premium UI**: Modern, responsive design featuring glassmorphism, floating paw animations, and skeleton loaders.
+### 📊 Modern Admin Dashboard (Bento Grid)
+- **High-Performance Analytics**: Serverless architecture using GAS for sub-second data retrieval.
+- **Asymmetric Bento Layout**: Premium, mobile-responsive layout for optimized data visualization.
+- **AI-Driven Summaries**: Real-time business performance summaries in clear, professional English.
+- **Customer Recovery**: One-click WhatsApp integration to recover low-rated customers.
+- **Interactive Reports**: Detailed operational radar charts and discovery source breakdowns.
+- **Printable QR System**: Dedicated page for generating branded, table-ready feedback QR codes.
 
 ### 📱 Customer Feedback Form
-- **Mobile-First Experience**: Highly interactive, touch-friendly form for seamless customer submissions.
-- **Automated Sync**: Submissions are instantly routed to Google Sheets for immediate visibility.
-- **Offline Resilience**: Local logging fallback in case of API downtime.
-
-### 🔒 Enterprise-Grade Backend
-- **Security Hardened**: Implements `helmet` security headers and strict `express-rate-limit` policies.
-- **Robust Auth**: Advanced Google Service Account credential sanitization for zero-fail deployments.
-- **Deep Diagnostics**: Comprehensive logging for production troubleshooting.
+- **Production-Grade UI**: Polished, mobile-first design with smooth transitions and validations.
+- **Instant Synchronization**: Zero-latency routing to Google Sheets for immediate action.
 
 ## 🛠 Tech Stack
 
-- **Frontend**: React 18, TypeScript, Tailwind CSS, Vite, Recharts, Lucide React.
-- **Backend**: Node.js, Express, Google APIs, Helmet, Morgan.
-- **Data**: Google Sheets API (used as a real-time database).
-- **Deployment**: Vercel (Frontend), Render (Backend).
-
-## 🚀 Quick Start
-
-### 1. Prerequisites
-- Node.js (v18+)
-- A Google Cloud Service Account with Google Sheets API enabled.
-
-### 2. Backend Setup
-```bash
-cd backend
-npm install
-# Create .env with GOOGLE_CREDENTIALS and GOOGLE_SHEET_ID
-npm start
-```
-
-### 3. Admin Setup
-```bash
-cd admin
-npm install
-# Create .env with VITE_API_URL
-npm run dev
-```
+- **Frontend**: React 19, TypeScript, Tailwind CSS 4, Framer Motion, Recharts, Lucide React.
+- **Backend**: Google Apps Script (Serverless Web App).
+- **Database**: Google Sheets (as a real-time BI data source).
+- **UI/UX**: Bento Grid Design System, Skeleton Loading, Staggered Animations.
 
 ## 🏗 Architecture
 
 ```mermaid
 graph TD
-    A[Customer Mobile Form] -->|POST| B[Express API]
+    A[Customer Mobile Form] -->|POST| B[Google Apps Script]
     B -->|Sync| C[(Google Sheets)]
     C -->|Fetch| B
-    B -->|JSON| D[Admin Dashboard]
-    D -->|Caching| D
+    B -->|JSON API| D[Admin Dashboard]
+    D -->|Real-time| D
+    D -->|Recover| E[WhatsApp API]
 ```
 
-## 📈 Future Roadmap
-- [ ] **PDF Reporting**: One-click professional report generation.
-- [ ] **AI Sentiment Analysis**: Automated categorization using NLP.
-- [ ] **Multi-Location Support**: Unified dashboard for multiple cafe branches.
+## 🚀 Environment Setup
+
+### 1. Backend (Google Apps Script)
+1. Copy the code from `scratch/Code.gs` into a new GAS Project.
+2. Deploy as a **Web App** (Execute as: Me, Access: Anyone).
+3. Copy the Web App URL.
+
+### 2. Admin Dashboard
+1. Create a `.env` file in the `admin/` directory.
+2. Add the following variables:
+   ```env
+   VITE_API_URL=https://script.google.com/macros/s/.../exec
+   VITE_ADMIN_KEY=your_secure_key
+   ```
+3. Run `npm install` and `npm run dev`.
+
+## 📄 Operational Notes
+- **Needs Attention**: Automatically flags reviews with an average score ≤ 3.0.
+- **Data Protection**: Ensure `VITE_ADMIN_KEY` matches the `ADMIN_KEY` property in your GAS script settings.
 
 ## 📄 License
 MIT

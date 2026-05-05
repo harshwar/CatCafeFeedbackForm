@@ -1,257 +1,308 @@
-import React, { useMemo, useState } from 'react';
-import { StatCard } from './components/StatCard';
-import { MessageSquare, Star, Heart, Users, ExternalLink, AlertTriangle, Zap } from 'lucide-react';
-import type { InsightsData } from './types';
-import { getVolumeData, getSourceData, getPerformanceData } from './utils/analytics';
-import type { TimeRange } from './utils/analytics';
+import React, { useMemo, useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  MessageSquare, Star, Heart, TrendingUp, TrendingDown, 
+  Calendar, PieChart, Info, ChevronLeft, ChevronRight,
+  ExternalLink, Sparkles, AlertTriangle
+} from 'lucide-react';
+import type { InsightsData, FeedbackEntry } from './types';
+import { 
+  getVolumeData, getSourceData, getPerformanceData, getDayOfWeekData,
+  getTrendData, getLowestCategory
+} from './utils/analytics';
 import { StandardLineChart } from './components/charts/StandardLineChart';
 import { StandardPieChart } from './components/charts/StandardPieChart';
+import { StandardBarChart } from './components/charts/StandardBarChart';
+import { TrendArrow } from './components/TrendArrow';
 
 interface DashboardProps {
   insights: InsightsData | null;
   onNavigate: (view: string) => void;
 }
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 }
+  }
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: { type: 'spring', stiffness: 100 }
+  }
+};
+
 export const Dashboard: React.FC<DashboardProps> = ({ insights, onNavigate }) => {
-  const [timeRange, setTimeRange] = useState<TimeRange>('30_days');
+  const [carouselIndex, setCarouselIndex] = useState(0);
 
   const rawStats = insights?.stats as any || {};
   const stats = {
     total: rawStats.total || 0,
     avgRating: rawStats.avgRating || 0,
     satisfaction: rawStats.satisfaction || 0,
-    returningRate: rawStats.returningRate ?? rawStats.responseRate ?? 0,
+    thisWeek: rawStats.thisWeekCount || 0,
   };
 
-  const volumeData = useMemo(() => getVolumeData(insights?.allFeedback || [], timeRange), [insights?.allFeedback, timeRange]);
-  const sourceData = useMemo(() => getSourceData(insights?.allFeedback || []), [insights?.allFeedback]);
-  const performanceData = useMemo(() => getPerformanceData(insights?.allFeedback || []), [insights?.allFeedback]);
+  const allFeedback = insights?.allFeedback || (insights as any)?.feedback || [];
+  const performanceData = useMemo(() => getPerformanceData(allFeedback), [allFeedback]);
+  const dayOfWeekData = useMemo(() => getDayOfWeekData(allFeedback), [allFeedback]);
+  const sourceData = useMemo(() => getSourceData(allFeedback), [allFeedback]);
+  const trends = useMemo(() => getTrendData(allFeedback), [allFeedback]);
+  const lowestCategory = useMemo(() => getLowestCategory(allFeedback), [allFeedback]);
 
-  if (stats.total === 0 && !(insights?.syncStatus?.localFailures ?? 0)) {
+  const recentFeedback = useMemo(() => allFeedback.slice(0, 5), [allFeedback]);
+
+  // Auto-slide carousel
+  useEffect(() => {
+    if (recentFeedback.length <= 1) return;
+    const interval = setInterval(() => {
+      setCarouselIndex(prev => (prev + 1) % recentFeedback.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [recentFeedback]);
+
+  if (stats.total === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-[70vh] bg-white/50 backdrop-blur-sm rounded-[2rem] border border-orange-100 p-12 text-center">
-        <div className="w-24 h-24 bg-orange-100 rounded-full flex items-center justify-center mb-6 text-orange-500">
+      <div className="flex flex-col items-center justify-center h-[70vh] bg-white rounded-[2.5rem] border border-orange-100 p-12 text-center shadow-sm">
+        <div className="w-24 h-24 bg-orange-50 rounded-full flex items-center justify-center mb-6 text-orange-400">
           <MessageSquare size={48} />
         </div>
-        <h3 className="text-2xl font-bold text-on-surface mb-2">No Feedback Yet</h3>
+        <h3 className="text-2xl font-bold text-stone-800 mb-2">Ready for Insights?</h3>
         <p className="text-stone-500 max-w-sm mb-8">
-          Once your customers start filling out the feedback form, their insights will purr-colate here in real-time.
+          Once your customers start sharing their thoughts, your business intelligence dashboard will come alive.
         </p>
-        <div className="flex gap-4">
-          <button 
-            onClick={() => window.open('/form', '_blank')}
-            className="bg-orange-500 text-white px-6 py-3 rounded-xl font-bold hover:bg-orange-600 transition-colors shadow-lg shadow-orange-200"
-          >
-            Open Feedback Form
-          </button>
-        </div>
+        <button 
+          onClick={() => onNavigate('feedback')}
+          className="bg-orange-500 text-white px-8 py-4 rounded-2xl font-bold hover:bg-orange-600 transition-all shadow-lg shadow-orange-200 hover:-translate-y-1 active:translate-y-0"
+        >
+          View Feedback Page
+        </button>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
-      {(insights?.syncStatus?.localFailures ?? 0) > 0 && (
-        <div className="bg-orange-50 border border-orange-200 p-4 rounded-2xl flex items-center gap-3 text-orange-800 text-sm">
-          <Zap size={18} className="text-orange-500" />
-          <span>You have <strong>{insights?.syncStatus?.localFailures}</strong> unsynced feedbacks logged locally. Please check your n8n connection.</span>
+    <motion.div 
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="space-y-6 pb-12"
+    >
+      {/* 1. TOP BANNER SECTION (Full Width) */}
+      <motion.div variants={itemVariants} className="bg-white p-10 rounded-[3rem] border border-orange-50 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-8 relative overflow-hidden group">
+        <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+          <Sparkles size={160} className="text-orange-600" />
         </div>
-      )}
-    
-      {/* Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard 
-          title="Total Feedbacks" 
-          value={stats.total} 
-          icon={<MessageSquare size={20} />} 
-          trend="+12%" 
-          trendUp={true} 
-        />
-        <StatCard 
-          title="Average Rating" 
-          value={stats.avgRating} 
-          icon={<Star size={20} />} 
-          trend="High" 
-          trendUp={true} 
-        />
-        <StatCard 
-          title="Satisfaction Score" 
-          value={`${stats.satisfaction}%`} 
-          icon={<Heart size={20} />} 
-          trend={stats.satisfaction >= 80 ? 'Strong' : stats.satisfaction >= 60 ? 'Moderate' : 'Needs Work'}
-          trendUp={stats.satisfaction >= 60} 
-        />
-        <StatCard 
-          title="Returning Visitors" 
-          value={`${stats.returningRate}%`} 
-          icon={<Users size={20} />} 
-          trend={stats.returningRate >= 50 ? 'Loyal Base' : 'Growing'}
-          trendUp={true} 
-        />
-      </div>
-
-      {/* Main Charts Row */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
-        {/* Volume Chart */}
-        <div className="xl:col-span-8 bg-white p-6 rounded-[1.5rem] shadow-sm border border-orange-50">
-          <div className="flex justify-between items-center mb-6">
-            <h4 className="text-xl font-bold text-on-surface">Feedback Volume</h4>
-            <select 
-              value={timeRange} 
-              onChange={(e) => setTimeRange(e.target.value as TimeRange)}
-              className="bg-stone-50 border-none rounded-xl text-sm px-4 py-2 focus:ring-2 focus:ring-orange-200"
-            >
-              <option value="30_days">Last 30 Days</option>
-              <option value="3_months">Last 3 Months</option>
-              <option value="1_year">This Year</option>
-              <option value="all">All Time</option>
-            </select>
+        
+        <div className="relative z-10 flex-1">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="bg-orange-50 p-3 rounded-2xl text-orange-600">
+              <Sparkles size={28} />
+            </div>
+            <h4 className="text-2xl font-black text-stone-800 tracking-tight">Business Intelligence Summary</h4>
           </div>
-          <div className="h-[300px] w-full pt-4">
-            <StandardLineChart data={volumeData} dataKey="count" nameKey="date" strokeColor="#f6a04d" />
-          </div>
+          <p className="text-3xl text-stone-800 leading-tight font-black tracking-tight max-w-4xl">
+            {insights?.summary || "Analyzing your feedback patterns..."}
+          </p>
         </div>
+      </motion.div>
 
-        {/* Discovery Sources Pie */}
-        <div className="xl:col-span-4 bg-white p-6 rounded-[1.5rem] shadow-sm border border-orange-50">
-          <h4 className="text-xl font-bold text-on-surface mb-6">Discovery Sources</h4>
-          <div className="h-[250px] w-full relative">
-            <StandardPieChart data={sourceData} nameKey="name" dataKey="value" />
-            <div className="absolute inset-0 flex flex-col justify-center items-center pointer-events-none">
-              <span className="text-2xl font-bold text-on-surface">{sourceData[0]?.value || 0}%</span>
-              <span className="text-[10px] text-stone-500 uppercase font-bold">{sourceData[0]?.name || 'N/A'}</span>
+      {/* 2. CRITICAL HIGHLIGHTS (Sub-Banner) */}
+      {lowestCategory && (
+        <motion.div variants={itemVariants} className="bg-red-50 p-6 rounded-[2rem] border border-red-100 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="bg-red-100 p-3 rounded-xl text-red-600">
+              <AlertTriangle size={24} />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-red-400 uppercase tracking-widest mb-0.5">Critical Focus Area This Week</p>
+              <h5 className="text-xl font-black text-red-700">{lowestCategory.category}</h5>
             </div>
           </div>
-          <div className="mt-4 space-y-3">
-            {sourceData.map((source) => (
-              <div key={source.name} className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: source.color }}></div>
-                  <span className="text-stone-600">{source.name}</span>
-                </div>
-                <span className="font-bold">{source.value}%</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Bottom Row */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
-        {/* Performance Bars */}
-        <div className="xl:col-span-5 bg-white p-6 rounded-[1.5rem] shadow-sm border border-orange-50">
-          <h4 className="text-xl font-bold text-on-surface mb-6">Purr-formance Ratings</h4>
-          <div className="space-y-6">
-            {performanceData.map((item) => (
-              <div key={item.category}>
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="font-medium text-stone-700">{item.category}</span>
-                  <span className="font-bold">{item.score}/5.0</span>
-                </div>
-                <div className="h-3 bg-stone-100 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-orange-400 rounded-full" 
-                    style={{ width: `${(item.score / 5) * 100}%` }}
-                  ></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Recent Feedback Feed */}
-        <div className="xl:col-span-7 bg-white p-6 rounded-[1.5rem] shadow-sm border border-orange-50">
-          <div className="flex justify-between items-center mb-6">
-            <h4 className="text-xl font-bold text-on-surface">Recent Purr-spective</h4>
+          <div className="flex items-center gap-6">
+            <div className="text-center md:text-right">
+              <p className="text-2xl font-black text-red-600">{lowestCategory.score}</p>
+              <p className="text-[10px] font-bold text-red-400 uppercase tracking-widest">Category Score</p>
+            </div>
             <button 
               onClick={() => onNavigate('feedback')}
-              className="text-orange-600 font-bold text-sm hover:underline"
+              className="px-6 py-3 bg-white text-red-600 font-bold rounded-xl text-sm shadow-sm hover:shadow-md transition-all"
             >
-              View All
+              View Related Feedback
             </button>
           </div>
-          <div className="space-y-4">
-            {(insights?.allFeedback || []).slice(0, 3).map((fb, idx) => (
-              <div key={idx} className="p-4 bg-stone-50 rounded-2xl border border-transparent hover:border-orange-200 transition-all group">
-                <div className="flex justify-between items-start mb-2">
+        </motion.div>
+      )}
+
+      {/* 3. ASYMMETRIC BENTO GRID */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6 auto-rows-auto">
+        
+        {/* STATS: TOTAL (Span 3) */}
+        <motion.div variants={itemVariants} className="lg:col-span-3 bg-white p-8 rounded-[2.5rem] border border-orange-50 shadow-sm flex flex-col justify-between">
+          <div className="w-14 h-14 bg-orange-100 rounded-2xl flex items-center justify-center text-orange-600 mb-6">
+            <MessageSquare size={24} />
+          </div>
+          <div>
+            <p className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-1">Total Feedback</p>
+            <div className="flex items-baseline gap-2">
+              <span className="text-4xl font-black text-stone-800">{stats.total}</span>
+              {trends.countTrend !== 0 && (
+                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${trends.countTrend > 0 ? 'text-green-500 bg-green-50' : 'text-red-500 bg-red-50'}`}>
+                  {trends.countTrend > 0 ? '↑' : '↓'} {Math.abs(trends.countTrend)}%
+                </span>
+              )}
+            </div>
+          </div>
+        </motion.div>
+
+        {/* STATS: RATING (Span 3) */}
+        <motion.div variants={itemVariants} className="lg:col-span-3 bg-white p-8 rounded-[2.5rem] border border-orange-50 shadow-sm flex flex-col justify-between">
+          <div className="w-14 h-14 bg-orange-100 rounded-2xl flex items-center justify-center text-orange-600 mb-6">
+            <Star size={24} />
+          </div>
+          <div>
+            <p className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-1">Avg Rating</p>
+            <div className="flex items-baseline gap-2">
+              <span className="text-4xl font-black text-stone-800">{stats.avgRating}</span>
+              {trends.ratingTrend !== 0 && (
+                <span className={`text-xs font-bold ${trends.ratingTrend > 0 ? 'text-green-500' : 'text-red-500'}`}>
+                  {trends.ratingTrend > 0 ? '↑' : '↓'} {Math.abs(trends.ratingTrend)}
+                </span>
+              )}
+            </div>
+          </div>
+        </motion.div>
+
+        {/* RECENT VOICE CAROUSEL (Span 6) */}
+        <motion.div variants={itemVariants} className="lg:col-span-6 bg-[#1d1b19] p-8 rounded-[2.5rem] shadow-xl text-white flex flex-col justify-between relative overflow-hidden min-h-[280px]">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/10 rounded-full -mr-32 -mt-32 blur-3xl" />
+          
+          <div className="relative z-10 flex flex-col h-full">
+            <div className="flex justify-between items-center mb-8">
+              <div className="flex items-center gap-3">
+                <div className="bg-white/10 p-2 rounded-lg text-orange-400">
+                  <MessageSquare size={18} />
+                </div>
+                <h4 className="text-lg font-bold">Recent Voice</h4>
+              </div>
+              <div className="flex gap-1">
+                {recentFeedback.map((_, i) => (
+                  <div key={i} className={`h-1 rounded-full transition-all duration-300 ${i === carouselIndex ? 'w-6 bg-orange-500' : 'w-2 bg-white/20'}`} />
+                ))}
+              </div>
+            </div>
+
+            <div className="flex-1 flex flex-col justify-center">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={carouselIndex}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className="space-y-6"
+                >
+                  <p className="text-2xl font-medium italic leading-snug line-clamp-2 text-orange-50">
+                    "{recentFeedback[carouselIndex]?.experience}"
+                  </p>
                   <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${idx === 0 ? 'bg-orange-100 text-orange-600' : 'bg-stone-200 text-stone-600'}`}>
-                      {(fb.fullName || 'User').split(' ').filter(Boolean).map(n => n[0]).join('')}
+                    <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center font-bold text-sm shadow-lg shadow-orange-500/20">
+                      {recentFeedback[carouselIndex]?.fullName?.[0] || 'U'}
                     </div>
                     <div>
-                      <p className="font-bold text-on-surface text-sm">{fb.fullName || 'Anonymous'}</p>
-                      <p className="text-[10px] text-stone-500 uppercase font-bold">{fb.timestamp}</p>
+                      <span className="block text-sm font-bold text-white">{recentFeedback[carouselIndex]?.fullName}</span>
+                      <span className="block text-[10px] text-stone-500 font-bold uppercase tracking-widest">{recentFeedback[carouselIndex]?.timestamp}</span>
                     </div>
                   </div>
-                  <div className="flex gap-0.5 text-orange-400">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} size={12} fill={i < (fb.service || 0) ? 'currentColor' : 'none'} />
-                    ))}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* VOLUME CHART (Span 8) */}
+        <motion.div variants={itemVariants} className="lg:col-span-8 bg-white p-8 rounded-[2.5rem] border border-orange-50 shadow-sm">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <div className="bg-orange-50 p-2 rounded-lg text-orange-500">
+                <Calendar size={18} />
+              </div>
+              <h4 className="text-lg font-bold text-stone-800">Visit Frequency</h4>
+            </div>
+            <div className="flex gap-2">
+              <span className="px-3 py-1 bg-stone-50 rounded-lg text-xs font-bold text-stone-500">Last 7 Days</span>
+            </div>
+          </div>
+          <div className="h-[320px] w-full">
+            <StandardBarChart data={dayOfWeekData} dataKey="count" nameKey="name" fillColor="#f6a04d" />
+          </div>
+        </motion.div>
+
+        {/* SATISFACTION (Span 4) */}
+        <motion.div variants={itemVariants} className="lg:col-span-4 bg-orange-500 p-8 rounded-[2.5rem] shadow-lg shadow-orange-100 text-white flex flex-col justify-between relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl" />
+          
+          <div className="relative z-10">
+            <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center mb-8">
+              <Heart size={28} />
+            </div>
+            <p className="text-xs font-bold text-orange-100 uppercase tracking-widest mb-1">Customer Satisfaction</p>
+            <div className="flex items-baseline gap-2 mb-4">
+              <span className="text-6xl font-black text-white">{stats.satisfaction}%</span>
+            </div>
+            <div className="bg-white/10 p-4 rounded-2xl border border-white/10">
+              <p className="text-sm font-bold leading-tight">Excellent! Your customers love the cafe experience.</p>
+            </div>
+          </div>
+          
+          <button 
+            onClick={() => onNavigate('reports')}
+            className="mt-8 w-full py-4 bg-white text-orange-600 rounded-2xl text-sm font-black shadow-lg hover:bg-orange-50 transition-all flex items-center justify-center gap-2"
+          >
+            Full Analytics <ExternalLink size={14} />
+          </button>
+        </motion.div>
+
+        {/* PERFORMANCE BARS (Span 12) */}
+        <motion.div variants={itemVariants} className="lg:col-span-12 bg-white p-8 rounded-[2.5rem] border border-orange-50 shadow-sm">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="bg-orange-50 p-2 rounded-lg text-orange-500">
+              <TrendingUp size={18} />
+            </div>
+            <h4 className="text-xl font-black text-stone-800">Operational Category Overview</h4>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-12 gap-y-8">
+            {performanceData.map((item) => (
+              <div key={item.category} className="group">
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-xs font-bold uppercase tracking-widest text-stone-400 group-hover:text-stone-600 transition-colors">{item.category}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-black text-stone-800">{item.score}</span>
+                    {item.trend !== 0 && (
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${item.trend > 0 ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'}`}>
+                        {item.trend > 0 ? '↑' : '↓'} {Math.abs(item.trend)}
+                      </span>
+                    )}
                   </div>
                 </div>
-                <p className="text-sm text-stone-600 line-clamp-2 mb-3">"{fb.experience}"</p>
-                <div className="flex justify-between items-center">
-                  <div className="flex gap-2">
-                    {(fb.interests || 'Visiting').split(',').slice(0, 2).map((tag, i) => (
-                      <span key={i} className="px-3 py-1 bg-white text-[10px] font-bold uppercase rounded-full border border-stone-100">{tag.trim()}</span>
-                    ))}
-                  </div>
-                  <button className="text-orange-600 font-bold text-xs flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
-                    View Full <ExternalLink size={12} />
-                  </button>
+                <div className="h-2.5 bg-stone-50 rounded-full overflow-hidden border border-stone-100 p-0.5">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${(item.score / 5) * 100}%` }}
+                    transition={{ duration: 1.2, ease: "easeOut" }}
+                    className={`h-full rounded-full ${item.score >= 4.5 ? 'bg-green-500' : item.score >= 3.5 ? 'bg-orange-400' : 'bg-red-400'}`}
+                  />
                 </div>
               </div>
             ))}
           </div>
-        </div>
-      </div>
+        </motion.div>
 
-      {/* Top Comments (Best & Worst) */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 mt-8">
-        {/* Best Reviews */}
-        <div className="bg-white p-6 rounded-[1.5rem] shadow-sm border border-stone-100">
-          <div className="flex items-center gap-2 mb-6 text-green-600">
-            <Star size={24} fill="currentColor" />
-            <h4 className="text-xl font-bold">Top Praises</h4>
-          </div>
-          <div className="space-y-4">
-            {insights?.topComments?.best.map((fb, idx) => (
-              <div key={idx} className="p-4 bg-green-50/50 rounded-2xl border border-green-100/50">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="font-bold text-sm text-on-surface">{fb.fullName}</span>
-                  <span className="font-bold text-xs px-2 py-1 bg-green-100 text-green-700 rounded-lg">{fb.avgRating?.toFixed(1)} / 5.0</span>
-                </div>
-                <p className="text-sm text-stone-600 italic">"{fb.experience}"</p>
-              </div>
-            ))}
-            {(!insights?.topComments?.best || insights.topComments.best.length === 0) && (
-              <p className="text-stone-400 text-sm">No written reviews available yet.</p>
-            )}
-          </div>
-        </div>
-
-        {/* Worst Reviews */}
-        <div className="bg-white p-6 rounded-[1.5rem] shadow-sm border border-stone-100">
-          <div className="flex items-center gap-2 mb-6 text-red-500">
-            <AlertTriangle size={24} />
-            <h4 className="text-xl font-bold">Needs Improvement</h4>
-          </div>
-          <div className="space-y-4">
-            {insights?.topComments?.worst.map((fb, idx) => (
-              <div key={idx} className="p-4 bg-red-50/50 rounded-2xl border border-red-100/50">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="font-bold text-sm text-on-surface">{fb.fullName}</span>
-                  <span className="font-bold text-xs px-2 py-1 bg-red-100 text-red-700 rounded-lg">{fb.avgRating?.toFixed(1)} / 5.0</span>
-                </div>
-                <p className="text-sm text-stone-600 italic">"{fb.experience}"</p>
-              </div>
-            ))}
-            {(!insights?.topComments?.worst || insights.topComments.worst.length === 0) && (
-              <p className="text-stone-400 text-sm">No critical written reviews to display.</p>
-            )}
-          </div>
-        </div>
       </div>
-    </div>
+    </motion.div>
   );
 };

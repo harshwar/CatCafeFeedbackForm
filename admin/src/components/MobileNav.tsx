@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, MessageSquare, Users, BarChart3 } from 'lucide-react';
+import { LayoutDashboard, MessageSquare, BarChart3, Printer } from 'lucide-react';
 
 interface MobileNavProps {
   currentView: string;
@@ -9,8 +9,8 @@ interface MobileNavProps {
 const MENU_ITEMS = [
   { id: 'dashboard', icon: <LayoutDashboard size={20} />, label: 'Home' },
   { id: 'feedback', icon: <MessageSquare size={20} />, label: 'Feed' },
-  { id: 'insights', icon: <Users size={20} />, label: 'People' },
   { id: 'reports', icon: <BarChart3 size={20} />, label: 'Stats' },
+  { id: 'qrcode', icon: <Printer size={20} />, label: 'QR' },
 ];
 
 export const MobileNav: React.FC<MobileNavProps> = ({ currentView, onNavigate }) => {

@@ -82,6 +82,20 @@ export const getSourceData = (feedbacks: FeedbackEntry[]) => {
 export const getPerformanceData = (feedbacks: FeedbackEntry[]) => {
   if (feedbacks.length === 0) return [];
   
+  const now = new Date();
+  const weekMs = 7 * 24 * 60 * 60 * 1000;
+  
+  const currentWeek = feedbacks.filter(fb => {
+    const d = new Date(fb.timestamp);
+    return (now.getTime() - d.getTime()) <= weekMs;
+  });
+  
+  const priorWeek = feedbacks.filter(fb => {
+    const d = new Date(fb.timestamp);
+    const diff = now.getTime() - d.getTime();
+    return diff > weekMs && diff <= (2 * weekMs);
+  });
+
   const categories = [
     { key: 'service', label: 'Cat Interaction' },
     { key: 'foodQuality', label: 'Food Quality' },
@@ -93,19 +107,41 @@ export const getPerformanceData = (feedbacks: FeedbackEntry[]) => {
   ];
 
   return categories.map(cat => {
-    const validScores = feedbacks
-      .map(fb => parseFloat(fb[cat.key as keyof FeedbackEntry] as string))
-      .filter(val => !isNaN(val));
-      
-    const avg = validScores.length > 0 
-      ? validScores.reduce((sum, val) => sum + val, 0) / validScores.length 
-      : 0;
-      
+    const getAvg = (list: FeedbackEntry[]) => {
+      const scores = list
+        .map(fb => parseFloat(fb[cat.key as keyof FeedbackEntry] as string))
+        .filter(val => !isNaN(val));
+      return scores.length > 0 ? scores.reduce((sum, val) => sum + val, 0) / scores.length : 0;
+    };
+
+    const currAvg = getAvg(currentWeek);
+    const priorAvg = getAvg(priorWeek);
+    const totalAvg = getAvg(feedbacks);
+    const trend = priorAvg === 0 ? 0 : Number(((currAvg - priorAvg) / priorAvg * 100).toFixed(1));
+
     return {
       category: cat.label,
-      score: Number(avg.toFixed(1))
+      score: Number(totalAvg.toFixed(1)),
+      trend: trend
     };
   });
+};
+
+export const getDayOfWeekData = (feedbacks: FeedbackEntry[]) => {
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const dayCounts = new Array(7).fill(0);
+  
+  feedbacks.forEach(fb => {
+    const d = new Date(fb.timestamp);
+    if (!isNaN(d.getTime())) {
+      dayCounts[d.getDay()]++;
+    }
+  });
+
+  return days.map((name, i) => ({
+    name,
+    count: dayCounts[i]
+  }));
 };
 
 export const getLoyaltySplit = (feedbacks: FeedbackEntry[]) => {
@@ -382,4 +418,49 @@ export const processFeedbackData = (feedbacks: FeedbackEntry[]) => {
   const topComments = getTopComments(feedbacks);
 
   return { performance, sourcePie, sourceROI, otherBreakdown, otherTotal, geo, interests, loyalty, vipList, attentionList, topComments };
+};
+
+export const getTrendData = (feedbacks: FeedbackEntry[]) => {
+  const now = new Date();
+  const weekMs = 7 * 24 * 60 * 60 * 1000;
+  
+  const currentWeek = feedbacks.filter(fb => {
+    const d = new Date(fb.timestamp);
+    return (now.getTime() - d.getTime()) <= weekMs;
+  });
+  
+  const priorWeek = feedbacks.filter(fb => {
+    const d = new Date(fb.timestamp);
+    const diff = now.getTime() - d.getTime();
+    return diff > weekMs && diff <= (2 * weekMs);
+  });
+
+  const getAvg = (list: FeedbackEntry[]) => {
+    if (list.length === 0) return 0;
+    const scores = list.flatMap(fb => [
+      fb.service, fb.foodQuality, fb.beverageQuality, 
+      fb.atmosphere, fb.valueForMoney, fb.cleanliness, fb.staffFriendliness
+    ].map(s => parseFloat(s as unknown as string)).filter(s => !isNaN(s)));
+    return scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+  };
+
+  const currAvg = getAvg(currentWeek);
+  const priorAvg = getAvg(priorWeek);
+  const ratingTrend = priorAvg === 0 ? 0 : Number(((currAvg - priorAvg) / priorAvg * 100).toFixed(1));
+  const countTrend = priorWeek.length === 0 ? 0 : Number(((currentWeek.length - priorWeek.length) / priorWeek.length * 100).toFixed(1));
+
+  return {
+    currentAvg: Number(currAvg.toFixed(1)),
+    priorAvg: Number(priorAvg.toFixed(1)),
+    ratingTrend,
+    countTrend,
+    volume: currentWeek.length,
+    volumeTrend: currentWeek.length - priorWeek.length
+  };
+};
+
+export const getLowestCategory = (feedbacks: FeedbackEntry[]) => {
+  const perf = getPerformanceData(feedbacks);
+  if (perf.length === 0) return null;
+  return [...perf].sort((a, b) => a.score - b.score)[0];
 };

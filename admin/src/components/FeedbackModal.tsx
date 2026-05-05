@@ -1,6 +1,7 @@
 import React from 'react';
 import type { FeedbackEntry } from '../types';
 import { X, Calendar, MapPin, Mail, Phone, Info } from 'lucide-react';
+import { useToast } from './Toast';
 
 interface FeedbackModalProps {
  feedback: FeedbackEntry | null;
@@ -9,7 +10,8 @@ interface FeedbackModalProps {
 }
 
 export const FeedbackModal: React.FC<FeedbackModalProps> = ({ feedback, onClose, satisfactionThreshold }) => {
- if (!feedback) return null;
+  const { showToast } = useToast();
+  if (!feedback) return null;
 
  const scores = [
  { label: 'Service', value: feedback.service },
@@ -34,12 +36,25 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ feedback, onClose,
  <span>{feedback.timestamp}</span>
  </div>
  </div>
- <button 
- onClick={onClose}
- className="p-2 bg-stone-100 hover:bg-stone-200 rounded-full transition-colors"
- >
- <X size={20} className="text-stone-600" />
- </button>
+  <div className="flex items-center gap-3">
+    {feedback.phone && (avgRating <= 3.5) && (
+      <a
+        href={`https://wa.me/${String(feedback.phone).replace(/\D/g, '')}?text=${encodeURIComponent(`Hi ${feedback.fullName}, this is The Gentle Host. We received your feedback and noticed your experience wasn't perfect. We'd love to learn more and make it right!`)}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={() => showToast('Opening WhatsApp recovery...', 'info')}
+        className="hidden sm:flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl transition-all text-xs shadow-lg shadow-green-100"
+      >
+        Recover Customer
+      </a>
+    )}
+    <button 
+      onClick={onClose}
+      className="p-2 bg-stone-100 hover:bg-stone-200 rounded-full transition-colors"
+    >
+      <X size={20} className="text-stone-600" />
+    </button>
+  </div>
  </div>
 
  <div className="p-6 space-y-8">

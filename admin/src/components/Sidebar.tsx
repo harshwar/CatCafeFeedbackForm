@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, MessageSquare, Users, BarChart3, PawPrint } from 'lucide-react';
+import { LayoutDashboard, MessageSquare, BarChart3, Printer, PawPrint } from 'lucide-react';
 
 interface SidebarProps {
   currentView: string;
@@ -9,8 +9,8 @@ interface SidebarProps {
 const MENU_ITEMS = [
   { id: 'dashboard', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
   { id: 'feedback', icon: <MessageSquare size={20} />, label: 'Feedback' },
-  { id: 'insights', icon: <Users size={20} />, label: 'Customer Insights' },
   { id: 'reports', icon: <BarChart3 size={20} />, label: 'Reports' },
+  { id: 'qrcode', icon: <Printer size={20} />, label: 'Print QR' },
 ];
 
 export const Sidebar: React.FC<SidebarProps> = ({ currentView, onNavigate }) => {
